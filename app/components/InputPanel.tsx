@@ -1,5 +1,5 @@
 import { h } from 'preact'; // eslint-disable-line @typescript-eslint/no-unused-vars
-import { useState, useEffect } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 import { MealStyle, BarService, GUESTS, BAR, PERCENTAGES } from '../../config/config';
 import { getDefaultFoodCost } from '../lib/defaults';
 import { OverridesPanel } from './OverridesPanel';
@@ -295,15 +295,8 @@ interface AdvancedSettingsProps {
 }
 
 function AdvancedSettings(props: AdvancedSettingsProps) {
-  // Default to collapsed, but auto-open when compare mode is enabled
+  // Default to collapsed regardless of mode
   const [isOpen, setIsOpen] = useState(false);
-
-  // Auto-open Advanced Settings when compare mode is enabled
-  useEffect(() => {
-    if (props.compareMode) {
-      setIsOpen(true);
-    }
-  }, [props.compareMode]);
 
   return (
     <div class="accordion" style="margin-top: 20px;">
