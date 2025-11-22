@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wedding Cost Estimator - The Wilds & Laural Mill</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💒</text></svg>">
+  <meta name="description" content="Estimate your wedding costs at The Wilds or Laural Mill with our interactive cost calculator.">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Georgia', 'Garamond', serif;
+      background: #fdfbf7;
+      color: #3e2723;
+    }
+    .demo-header {
+      background: linear-gradient(135deg, #8d6e63 0%, #5d4037 50%, #3e2723 100%);
+      color: #fff;
+      padding: 60px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .demo-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+      opacity: 0.3;
+    }
+    .demo-header-content {
+      position: relative;
+      z-index: 1;
+    }
+    .demo-header h1 {
+      margin: 0 0 15px 0;
+      font-size: 3rem;
+      font-weight: 400;
+      letter-spacing: 1px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .demo-header .tagline {
+      margin: 0 0 30px 0;
+      font-size: 1.3rem;
+      opacity: 0.95;
+      font-style: italic;
+    }
+    .venue-info {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      margin-top: 40px;
+      flex-wrap: wrap;
+    }
+    .venue-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 25px;
+      text-align: center;
+      min-width: 280px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .venue-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .venue-name {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .venue-location {
+      font-size: 0.95rem;
+      opacity: 0.9;
+      margin-bottom: 15px;
+    }
+    .venue-contact {
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .venue-contact a {
+      color: #fff;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+      transition: border-color 0.3s ease;
+    }
+    .venue-contact a:hover {
+      border-bottom-color: #fff;
+    }
+    .venue-links {
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+    .venue-link {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 20px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .venue-link:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+    @media (max-width: 768px) {
+      .demo-header h1 {
+        font-size: 2.2rem;
+      }
+      .venue-info {
+        gap: 30px;
+      }
+      .venue-card {
+        min-width: 250px;
+        padding: 20px;
+      }
+    }
+    .demo-instructions {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .demo-instructions h2 {
+      margin-top: 0;
+      color: #2c3e50;
+    }
+    .demo-instructions code {
+      background: #f8f9fa;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+    }
+    .demo-instructions pre {
+      background: #2c3e50;
+      color: #fff;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .demo-instructions pre code {
+      background: none;
+      color: inherit;
+      padding: 0;
+    }
+    .demo-container {
+      max-width: 1200px;
+      margin: 0 auto 40px;
+      padding: 0 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-header">
+    <div class="demo-header-content">
+      <h1>Wedding Cost Estimator</h1>
+      <p class="tagline">Plan your perfect wedding at our sister venues</p>
+      
+      <div class="venue-info">
+        <div class="venue-card">
+          <div class="venue-name">The Wilds</div>
+          <div class="venue-location">Bloomington, Indiana</div>
+          <div class="venue-contact">
+            <div>📍 6483 E Kent Road, Bloomington, IN</div>
+            <div>📞 <a href="tel:+18123294537">(812) 329-4537</a></div>
+            <div>✉️ <a href="mailto:info@thewildsvenue.com">info@thewildsvenue.com</a></div>
+          </div>
+          <div class="venue-links">
+            <a href="https://thewildsvenue.com" class="venue-link" target="_blank" rel="noopener">Visit Website</a>
+            <a href="https://thewildsvenue.com/details/#featured-weddings" class="venue-link" target="_blank" rel="noopener">View Gallery</a>
+          </div>
+        </div>
+        
+        <div class="venue-card">
+          <div class="venue-name">Laural Mill</div>
+          <div class="venue-location">Heltonville, Indiana</div>
+          <div class="venue-contact">
+            <div>📍 350 Heltonville Mill Road, Heltonville, IN</div>
+            <div>📞 <a href="tel:+18128073062">(812) 807-3062</a></div>
+            <div>✉️ <a href="mailto:info@lauralmill.com">info@lauralmill.com</a></div>
+          </div>
+          <div class="venue-links">
+            <a href="https://lauralmill.com" class="venue-link" target="_blank" rel="noopener">Visit Website</a>
+            <a href="https://lauralmill.com/gallery" class="venue-link" target="_blank" rel="noopener">View Gallery</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="demo-container">
+    <!-- Widget will be mounted here -->
+    <div id="wedding-cost-estimator"></div>
+  </div>
+
+  <script src="widget.js" defer></script>
+</body>
+</html>
+

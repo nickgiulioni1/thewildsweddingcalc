@@ -1,0 +1,38 @@
+{
+  "name": "wedding-cost-estimator-widget",
+  "version": "1.0.0",
+  "description": "Lightweight embeddable wedding cost estimator widget for The Wilds and Laural Mill",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && cp public/index.html dist/index.html",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit && eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "preact": "^10.19.3"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.8.1",
+    "@types/node": "^20.10.6",
+    "@typescript-eslint/eslint-plugin": "^6.17.0",
+    "@typescript-eslint/parser": "^6.17.0",
+    "eslint": "^8.56.0",
+    "jsdom": "^27.0.0",
+    "rollup-plugin-visualizer": "^5.12.0",
+    "terser": "^5.44.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10",
+    "vitest": "^1.1.1"
+  },
+  "keywords": [
+    "wedding",
+    "cost-estimator",
+    "widget",
+    "embeddable"
+  ],
+  "author": "The Wilds / Laural Mill",
+  "license": "MIT"
+}
