@@ -10,6 +10,14 @@ function focusAndScrollTo(id: string) {
   }
 }
 
+function formatCurrency(value: number) {
+  return value.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  });
+}
+
 interface DisclaimerModalProps {
   onClose: () => void;
 }
@@ -65,11 +73,11 @@ export function DisclaimerModal({ onClose }: DisclaimerModalProps) {
               </a>
             </dt>
             <dd>
-              Base cost: ${FOOD.basePerGuest}/guest (Buffet style)
+              Base cost: {formatCurrency(FOOD.basePerGuest)}/guest (Buffet style)
               <br />
-              Family Style: +${FOOD.deltasPerGuest.family}/guest
+              Family Style: +{formatCurrency(FOOD.deltasPerGuest.family)}/guest
               <br />
-              Plated: +${FOOD.deltasPerGuest.plated}/guest
+              Plated: +{formatCurrency(FOOD.deltasPerGuest.plated)}/guest
             </dd>
             
             <dt>
@@ -80,8 +88,8 @@ export function DisclaimerModal({ onClose }: DisclaimerModalProps) {
             <dd>
               {BAR.services.map(service => (
                 <span key={service.id}>
-                  {service.label}: {service.id === 'cashBar' ? 'No charge' : 
-                    `$${service.perGuestByHour?.[4] || 0}/guest (4hr example)`}<br />
+                  {service.label}: {service.id === 'cashBar' ? 'No charge' :
+                    `${formatCurrency(service.perGuestByHour?.[4] || 0)}/guest (4hr example)`}<br />
                 </span>
               ))}
             </dd>
@@ -91,63 +99,63 @@ export function DisclaimerModal({ onClose }: DisclaimerModalProps) {
                 Photography
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.photography.default.toLocaleString()}</dd>
+            <dd>{formatCurrency(WEDDING_CATEGORIES.photography.default)}</dd>
 
             <dt>
               <a href="#override-videography" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-videography'); }}>
                 Videography
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.videography.default.toLocaleString()}</dd>
+            <dd>{formatCurrency(WEDDING_CATEGORIES.videography.default)}</dd>
 
             <dt>
               <a href="#override-flowers" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-flowers'); }}>
                 Flowers & Décor
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.flowers.default.toLocaleString()}</dd>
+            <dd>{formatCurrency(WEDDING_CATEGORIES.flowers.default)}</dd>
 
             <dt>
               <a href="#override-djMusic" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-djMusic'); }}>
                 DJ/Music
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.djMusic.default.toLocaleString()}</dd>
+            <dd>{formatCurrency(WEDDING_CATEGORIES.djMusic.default)}</dd>
 
             <dt>
               <a href="#override-invitations" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-invitations'); }}>
                 Invitations
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.invitations.default.toLocaleString()}</dd>
+            <dd>{formatCurrency(WEDDING_CATEGORIES.invitations.default)}</dd>
 
             <dt>
               <a href="#override-transportation" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-transportation'); }}>
                 Transportation
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.transportation.default.toLocaleString()}</dd>
+            <dd>{formatCurrency(WEDDING_CATEGORIES.transportation.default)}</dd>
 
             <dt>
               <a href="#override-hairMakeup" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-hairMakeup'); }}>
                 Hair & Makeup
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.hairMakeup.default.toLocaleString()}</dd>
+            <dd>{formatCurrency(WEDDING_CATEGORIES.hairMakeup.default)}</dd>
 
             <dt>
               <a href="#override-cakeDesserts" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-cakeDesserts'); }}>
                 Cake & Desserts
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.cakeDesserts.default.toLocaleString()}</dd>
+            <dd>{formatCurrency(WEDDING_CATEGORIES.cakeDesserts.default)}</dd>
             
             <dt>
               <a href="#planner-used" onClick={(e) => { e.preventDefault(); focusAndScrollTo('planner-used'); }}>
                 External Planner (if selected)
               </a>
             </dt>
-            <dd>${EXTERNAL_PLANNER_COST.toLocaleString()}</dd>
+            <dd>{formatCurrency(EXTERNAL_PLANNER_COST)}</dd>
           </dl>
           
           <h3>Included at The Wilds & Laural Mill</h3>
