@@ -6,6 +6,11 @@ import { OverridesPanel } from './OverridesPanel';
 import { OtherVenueOverridesPanel } from './OtherVenueOverridesPanel';
 import { Tooltip } from './Tooltip';
 
+const parsePercentInput = (event: Event, defaultValue: number) => {
+  const value = parseFloat((event.target as HTMLInputElement).value);
+  return Number.isNaN(value) ? defaultValue : value;
+};
+
 interface InputPanelProps {
   date: string;
   guests: number;
@@ -46,11 +51,6 @@ interface InputPanelProps {
 
 export function InputPanel(props: InputPanelProps) {
   // InputPanel rendered - removed console.log per logger utility
-
-  const parsePercentInput = (event: Event, defaultValue: number) => {
-    const value = parseFloat((event.target as HTMLInputElement).value);
-    return Number.isNaN(value) ? defaultValue : value;
-  };
 
   return (
     <div class="input-panel">
