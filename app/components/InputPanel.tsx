@@ -47,6 +47,11 @@ interface InputPanelProps {
 export function InputPanel(props: InputPanelProps) {
   // InputPanel rendered - removed console.log per logger utility
 
+  const parsePercentInput = (event: Event, defaultValue: number) => {
+    const value = parseFloat((event.target as HTMLInputElement).value);
+    return Number.isNaN(value) ? defaultValue : value;
+  };
+
   return (
     <div class="input-panel">
       <h2>Wedding Details</h2>
@@ -332,7 +337,7 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
             max="100"
             step="0.1"
             value={props.service}
-            onChange={(e) => props.onServiceChange(parseFloat((e.target as HTMLInputElement).value) || PERCENTAGES.service)}
+            onChange={(e) => props.onServiceChange(parsePercentInput(e, PERCENTAGES.service))}
             aria-describedby={props.serviceError ? "service-error" : undefined}
             aria-invalid={props.serviceError ? "true" : "false"}
             class={props.serviceError ? "input-error" : ""}
@@ -353,7 +358,7 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
             max="100"
             step="0.1"
             value={props.tax}
-            onChange={(e) => props.onTaxChange(parseFloat((e.target as HTMLInputElement).value) || PERCENTAGES.tax)}
+            onChange={(e) => props.onTaxChange(parsePercentInput(e, PERCENTAGES.tax))}
             aria-describedby={props.taxError ? "tax-error" : undefined}
             aria-invalid={props.taxError ? "true" : "false"}
             class={props.taxError ? "input-error" : ""}
@@ -374,7 +379,7 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
             max="100"
             step="0.1"
             value={props.gratuity}
-            onChange={(e) => props.onGratuityChange(parseFloat((e.target as HTMLInputElement).value) || PERCENTAGES.gratuity)}
+            onChange={(e) => props.onGratuityChange(parsePercentInput(e, PERCENTAGES.gratuity))}
             aria-describedby={props.gratuityError ? "gratuity-error" : undefined}
             aria-invalid={props.gratuityError ? "true" : "false"}
             class={props.gratuityError ? "input-error" : ""}
@@ -394,7 +399,7 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
             min="0"
             step="0.1"
             value={props.contingency}
-            onChange={(e) => props.onContingencyChange(parseFloat((e.target as HTMLInputElement).value) || PERCENTAGES.contingency)}
+            onChange={(e) => props.onContingencyChange(parsePercentInput(e, PERCENTAGES.contingency))}
             aria-describedby={props.contingencyError ? "contingency-error" : "contingency-help"}
             aria-invalid={props.contingencyError ? "true" : "false"}
             class={props.contingencyError ? "input-error" : ""}
