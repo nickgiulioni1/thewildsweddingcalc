@@ -91,56 +91,56 @@ export function DisclaimerModal({ onClose }: DisclaimerModalProps) {
                 Photography
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.photography.toLocaleString()}</dd>
-            
+            <dd>${WEDDING_CATEGORIES.photography.default.toLocaleString()}</dd>
+
             <dt>
               <a href="#override-videography" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-videography'); }}>
                 Videography
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.videography.toLocaleString()}</dd>
-            
+            <dd>${WEDDING_CATEGORIES.videography.default.toLocaleString()}</dd>
+
             <dt>
               <a href="#override-flowers" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-flowers'); }}>
                 Flowers & Décor
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.flowers.toLocaleString()}</dd>
-            
+            <dd>${WEDDING_CATEGORIES.flowers.default.toLocaleString()}</dd>
+
             <dt>
               <a href="#override-djMusic" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-djMusic'); }}>
                 DJ/Music
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.djMusic.toLocaleString()}</dd>
-            
+            <dd>${WEDDING_CATEGORIES.djMusic.default.toLocaleString()}</dd>
+
             <dt>
               <a href="#override-invitations" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-invitations'); }}>
                 Invitations
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.invitations.toLocaleString()}</dd>
-            
+            <dd>${WEDDING_CATEGORIES.invitations.default.toLocaleString()}</dd>
+
             <dt>
               <a href="#override-transportation" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-transportation'); }}>
                 Transportation
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.transportation.toLocaleString()}</dd>
-            
+            <dd>${WEDDING_CATEGORIES.transportation.default.toLocaleString()}</dd>
+
             <dt>
               <a href="#override-hairMakeup" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-hairMakeup'); }}>
                 Hair & Makeup
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.hairMakeup.toLocaleString()}</dd>
-            
+            <dd>${WEDDING_CATEGORIES.hairMakeup.default.toLocaleString()}</dd>
+
             <dt>
               <a href="#override-cakeDesserts" onClick={(e) => { e.preventDefault(); focusAndScrollTo('override-cakeDesserts'); }}>
                 Cake & Desserts
               </a>
             </dt>
-            <dd>${WEDDING_CATEGORIES.cakeDesserts.toLocaleString()}</dd>
+            <dd>${WEDDING_CATEGORIES.cakeDesserts.default.toLocaleString()}</dd>
             
             <dt>
               <a href="#planner-used" onClick={(e) => { e.preventDefault(); focusAndScrollTo('planner-used'); }}>
