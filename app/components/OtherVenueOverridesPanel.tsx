@@ -35,6 +35,8 @@ export function OtherVenueOverridesPanel({
     if (key === 'tablesChairs') return OTHER_VENUE_DEFAULTS.tablesChairs;
     if (key === 'coreDecor') return OTHER_VENUE_DEFAULTS.coreDecor;
     if (key === 'dayOfCoordination') return OTHER_VENUE_DEFAULTS.dayOfCoordination;
+    if (key === 'ceremonyAudio') return OTHER_VENUE_DEFAULTS.ceremonyAudio;
+    if (key === 'setupTeardown') return OTHER_VENUE_DEFAULTS.setupTeardown;
     if (key === 'cleaning') return OTHER_VENUE_DEFAULTS.cleaning;
     return 0;
   };
