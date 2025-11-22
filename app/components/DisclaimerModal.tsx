@@ -10,8 +10,17 @@ function focusAndScrollTo(id: string) {
   }
 }
 
-function formatCurrency(value: number) {
-  return value.toLocaleString('en-US', {
+function formatCurrency(value: unknown) {
+  const amount =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'object' && value !== null && 'default' in (value as Record<string, unknown>)
+        ? Number((value as { default: number }).default)
+        : Number(value);
+
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+
+  return safeAmount.toLocaleString('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
