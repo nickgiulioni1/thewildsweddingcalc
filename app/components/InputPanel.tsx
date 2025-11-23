@@ -1,15 +1,9 @@
 import { h } from 'preact'; // eslint-disable-line @typescript-eslint/no-unused-vars
-import { useState } from 'preact/hooks';
 import { MealStyle, BarService, GUESTS, BAR, PERCENTAGES } from '../../config/config';
 import { getDefaultFoodCost } from '../lib/defaults';
 import { OverridesPanel } from './OverridesPanel';
 import { OtherVenueOverridesPanel } from './OtherVenueOverridesPanel';
 import { Tooltip } from './Tooltip';
-
-const parsePercentInput = (event: Event, defaultValue: number) => {
-  const value = parseFloat((event.target as HTMLInputElement).value);
-  return Number.isNaN(value) ? defaultValue : value;
-};
 
 interface InputPanelProps {
   date: string;
@@ -295,32 +289,12 @@ interface AdvancedSettingsProps {
 }
 
 function AdvancedSettings(props: AdvancedSettingsProps) {
-  // Default to collapsed regardless of mode
-  const [isOpen, setIsOpen] = useState(false);
-
   return (
-    <div class="accordion" style="margin-top: 20px;">
-      <div
-        class="accordion-header"
-        onClick={() => setIsOpen(!isOpen)}
-        onKeyPress={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            setIsOpen(!isOpen);
-          }
-        }}
-        role="button"
-        tabIndex={0}
-        aria-expanded={isOpen}
-        aria-controls="advanced-settings-content"
-      >
+    <details class="accordion" style="margin-top: 20px;">
+      <summary class="accordion-header" aria-controls="advanced-settings-content">
         <span>Advanced Settings (Percentages)</span>
-        <span>{isOpen ? '▲' : '▼'}</span>
-      </div>
-      <div
-        id="advanced-settings-content"
-        class={`accordion-content ${!isOpen ? 'collapsed' : ''}`}
-      >
+      </summary>
+      <div id="advanced-settings-content" class="accordion-content">
         <div class="input-group">
           <label for="service-percent">Service Fee (%)</label>
           <input
@@ -330,7 +304,10 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
             max="100"
             step="0.1"
             value={props.service}
-            onChange={(e) => props.onServiceChange(parsePercentInput(e, PERCENTAGES.service))}
+            onChange={(e) => {
+              const value = parseFloat((e.target as HTMLInputElement).value);
+              props.onServiceChange(Number.isNaN(value) ? PERCENTAGES.service : value);
+            }}
             aria-describedby={props.serviceError ? "service-error" : undefined}
             aria-invalid={props.serviceError ? "true" : "false"}
             class={props.serviceError ? "input-error" : ""}
@@ -351,7 +328,10 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
             max="100"
             step="0.1"
             value={props.tax}
-            onChange={(e) => props.onTaxChange(parsePercentInput(e, PERCENTAGES.tax))}
+            onChange={(e) => {
+              const value = parseFloat((e.target as HTMLInputElement).value);
+              props.onTaxChange(Number.isNaN(value) ? PERCENTAGES.tax : value);
+            }}
             aria-describedby={props.taxError ? "tax-error" : undefined}
             aria-invalid={props.taxError ? "true" : "false"}
             class={props.taxError ? "input-error" : ""}
@@ -372,7 +352,10 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
             max="100"
             step="0.1"
             value={props.gratuity}
-            onChange={(e) => props.onGratuityChange(parsePercentInput(e, PERCENTAGES.gratuity))}
+            onChange={(e) => {
+              const value = parseFloat((e.target as HTMLInputElement).value);
+              props.onGratuityChange(Number.isNaN(value) ? PERCENTAGES.gratuity : value);
+            }}
             aria-describedby={props.gratuityError ? "gratuity-error" : undefined}
             aria-invalid={props.gratuityError ? "true" : "false"}
             class={props.gratuityError ? "input-error" : ""}
@@ -392,7 +375,10 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
             min="0"
             step="0.1"
             value={props.contingency}
-            onChange={(e) => props.onContingencyChange(parsePercentInput(e, PERCENTAGES.contingency))}
+            onChange={(e) => {
+              const value = parseFloat((e.target as HTMLInputElement).value);
+              props.onContingencyChange(Number.isNaN(value) ? PERCENTAGES.contingency : value);
+            }}
             aria-describedby={props.contingencyError ? "contingency-error" : "contingency-help"}
             aria-invalid={props.contingencyError ? "true" : "false"}
             class={props.contingencyError ? "input-error" : ""}
@@ -420,6 +406,6 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
           />
         )}
       </div>
-    </div>
+    </details>
   );
 }
