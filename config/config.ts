@@ -138,6 +138,7 @@ export const OTHER_VENUE_CATEGORIES = {
   tablesChairs: { name: 'Tables & Chairs', tooltip: 'Rental cost for tables, chairs, and linens (included at our venues)' },
   coreDecor: { name: 'Core Décor', tooltip: 'Basic venue décor and setup (included at our venues)' },
   dayOfCoordination: { name: 'Day-of Coordination', tooltip: 'Professional coordination on wedding day (included at our venues)' },
+  externalPlanner: { name: 'External Planner/DOC', tooltip: 'Professional planner or coordinator not included at other venues' },
   ceremonyAudio: { name: 'Ceremony Audio', tooltip: 'Audio support for ceremony at other venues' },
   setupTeardown: { name: 'Setup/Teardown', tooltip: 'Labor for event setup and teardown at other venues' },
   cleaning: { name: 'Cleaning', tooltip: 'Post-event cleaning and restoration (included at our venues)' },

@@ -5,6 +5,8 @@ import {
   PERCENTAGES,
   OTHER_VENUE_DEFAULTS,
   VENUE_FEES,
+  WEDDING_CATEGORIES,
+  OTHER_VENUE_CATEGORIES,
 } from '../../config/config';
 import { getBand } from './dateBand';
 import { getVenueFee } from './venueFees';
@@ -18,7 +20,23 @@ import {
 } from './defaults';
 import { logger } from './logger';
 
+export type WeddingCategoryId = keyof typeof WEDDING_CATEGORIES;
+
+export type LineItemId =
+  | 'venueFee'
+  | 'barSetupFee'
+  | 'barService'
+  | WeddingCategoryId
+  | 'tablesChairs'
+  | 'coreDecor'
+  | 'dayOfCoordination'
+  | 'cleaning'
+  | 'ceremonyAudio'
+  | 'setupTeardown'
+  | 'externalPlanner';
+
 export interface LineItem {
+  id: LineItemId;
   name: string;
   amount: number;
   perGuest?: number;
@@ -77,15 +95,7 @@ export interface OtherVenueInputs {
   overrides?: Partial<OtherVenueOverrides>;
   percentages?: Partial<typeof PERCENTAGES>;
   // Use same food/bar/category costs as our venue for fair comparison
-  foodCost: number;
-  photographyCost: number;
-  videographyCost: number;
-  flowersCost: number;
-  djMusicCost: number;
-  invitationsCost: number;
-  transportationCost: number;
-  hairMakeupCost: number;
-  cakeDesertsCost: number;
+  categoryCosts: Record<WeddingCategoryId, number>;
 }
 
 export interface OtherVenueOverrides {
@@ -119,6 +129,7 @@ export function calculateOurVenue(inputs: CalculationInputs): CalculationResult 
 
   // Venue Fee (first item)
   lineItems.push({
+    id: 'venueFee',
     name: 'Venue Fee',
     amount: venueFee,
   });
@@ -126,39 +137,45 @@ export function calculateOurVenue(inputs: CalculationInputs): CalculationResult 
   // Bar Setup Fee (what we provide)
   const barSetupFee = getBarSetupFee(inputs.barDuration);
   lineItems.push({
-    name: 'Bar Setup Fee',
+    id: 'barSetupFee',
+    name: OTHER_VENUE_CATEGORIES.barSetupFee.name,
     amount: barSetupFee,
   });
 
   // Bar Service (what we provide)
   const barCost = inputs.overrides?.bar ?? getDefaultBarCost(clampedGuests, inputs.barService, inputs.barDuration);
   lineItems.push({
-    name: 'Bar Service',
+    id: 'barService',
+    name: OTHER_VENUE_CATEGORIES.barService.name,
     amount: barCost,
     perGuest: barCost / clampedGuests,
   });
 
   // Items included at our venue (always $0, ignore overrides) - show our value first
   lineItems.push({
-    name: 'Tables & Chairs',
+    id: 'tablesChairs',
+    name: OTHER_VENUE_CATEGORIES.tablesChairs.name,
     amount: 0,
     isIncluded: true,
   });
   
   lineItems.push({
-    name: 'Core Décor',
+    id: 'coreDecor',
+    name: OTHER_VENUE_CATEGORIES.coreDecor.name,
     amount: 0,
     isIncluded: true,
   });
   
   lineItems.push({
-    name: 'Day-of Coordination',
+    id: 'dayOfCoordination',
+    name: OTHER_VENUE_CATEGORIES.dayOfCoordination.name,
     amount: 0,
     isIncluded: true,
   });
   
   lineItems.push({
-    name: 'Cleaning',
+    id: 'cleaning',
+    name: OTHER_VENUE_CATEGORIES.cleaning.name,
     amount: 0,
     isIncluded: true,
   });
@@ -166,7 +183,8 @@ export function calculateOurVenue(inputs: CalculationInputs): CalculationResult 
   // Food (external vendor)
   const foodCost = inputs.overrides?.food ?? getDefaultFoodCost(clampedGuests, inputs.mealStyle);
   lineItems.push({
-    name: 'Food & Catering',
+    id: 'food',
+    name: WEDDING_CATEGORIES.food.name,
     amount: foodCost,
     perGuest: foodCost / clampedGuests,
   });
@@ -175,55 +193,64 @@ export function calculateOurVenue(inputs: CalculationInputs): CalculationResult 
   const categories = getDefaultCategories();
   
   lineItems.push({
-    name: 'Photography',
+    id: 'photography',
+    name: categories.photography.name,
     amount: inputs.overrides?.photography ?? categories.photography.default,
   });
-  
+
   lineItems.push({
-    name: 'Videography',
+    id: 'videography',
+    name: categories.videography.name,
     amount: inputs.overrides?.videography ?? categories.videography.default,
   });
-  
+
   lineItems.push({
-    name: 'Flowers & Décor',
+    id: 'flowers',
+    name: categories.flowers.name,
     amount: inputs.overrides?.flowers ?? categories.flowers.default,
   });
-  
+
   lineItems.push({
-    name: 'DJ/Music',
+    id: 'djMusic',
+    name: categories.djMusic.name,
     amount: inputs.overrides?.djMusic ?? categories.djMusic.default,
   });
-  
+
   lineItems.push({
-    name: 'Invitations',
+    id: 'invitations',
+    name: categories.invitations.name,
     amount: inputs.overrides?.invitations ?? categories.invitations.default,
   });
-  
+
   lineItems.push({
-    name: 'Transportation',
+    id: 'transportation',
+    name: categories.transportation.name,
     amount: inputs.overrides?.transportation ?? categories.transportation.default,
   });
-  
+
   lineItems.push({
-    name: 'Hair & Makeup',
+    id: 'hairMakeup',
+    name: categories.hairMakeup.name,
     amount: inputs.overrides?.hairMakeup ?? categories.hairMakeup.default,
   });
-  
+
   lineItems.push({
-    name: 'Cake & Desserts',
+    id: 'cakeDesserts',
+    name: categories.cakeDesserts.name,
     amount: inputs.overrides?.cakeDesserts ?? categories.cakeDesserts.default,
   });
 
   // External planner (if selected)
   if (inputs.plannerUsed) {
     lineItems.push({
-      name: 'External Planner',
+      id: 'externalPlanner',
+      name: OTHER_VENUE_CATEGORIES.externalPlanner.name,
       amount: inputs.overrides?.externalPlanner ?? getExternalPlannerCost(),
     });
   }
 
   const subtotalExVenue = lineItems
-    .filter(item => item.name !== 'Venue Fee')
+    .filter(item => item.id !== 'venueFee')
     .reduce((sum, item) => sum + item.amount, 0);
   logger.debug(`Subtotal (excluding venue): $${subtotalExVenue}`);
 
@@ -293,127 +320,145 @@ export function calculateOtherVenue(inputs: OtherVenueInputs): CalculationResult
 
   // Venue Fee (first item)
   lineItems.push({
+    id: 'venueFee',
     name: 'Venue Fee',
     amount: venueFee,
   });
 
   // Food (same as our venue)
   lineItems.push({
-    name: 'Food & Catering',
-    amount: inputs.foodCost,
-    perGuest: inputs.foodCost / clampedGuests,
+    id: 'food',
+    name: WEDDING_CATEGORIES.food.name,
+    amount: inputs.categoryCosts.food,
+    perGuest: inputs.categoryCosts.food / clampedGuests,
   });
 
   // Bar Setup Fee (same as our venue)
   const barSetupFee = inputs.overrides?.barSetupFee ?? getBarSetupFee(inputs.barDuration);
   lineItems.push({
-    name: 'Bar Setup Fee',
+    id: 'barSetupFee',
+    name: OTHER_VENUE_CATEGORIES.barSetupFee.name,
     amount: barSetupFee,
   });
 
   // Bar Service (same as our venue)
   const barCost = inputs.overrides?.bar ?? getDefaultBarCost(clampedGuests, inputs.barService, inputs.barDuration);
   lineItems.push({
-    name: 'Bar Service',
+    id: 'barService',
+    name: OTHER_VENUE_CATEGORIES.barService.name,
     amount: barCost,
     perGuest: barCost / clampedGuests,
   });
 
   // Same additional categories as our venue
   lineItems.push({
-    name: 'Photography',
-    amount: inputs.photographyCost,
+    id: 'photography',
+    name: WEDDING_CATEGORIES.photography.name,
+    amount: inputs.categoryCosts.photography,
   });
-  
+
   lineItems.push({
-    name: 'Videography',
-    amount: inputs.videographyCost,
+    id: 'videography',
+    name: WEDDING_CATEGORIES.videography.name,
+    amount: inputs.categoryCosts.videography,
   });
-  
+
   lineItems.push({
-    name: 'Flowers & Décor',
-    amount: inputs.flowersCost,
+    id: 'flowers',
+    name: WEDDING_CATEGORIES.flowers.name,
+    amount: inputs.categoryCosts.flowers,
   });
-  
+
   lineItems.push({
-    name: 'DJ/Music',
-    amount: inputs.djMusicCost,
+    id: 'djMusic',
+    name: WEDDING_CATEGORIES.djMusic.name,
+    amount: inputs.categoryCosts.djMusic,
   });
-  
+
   lineItems.push({
-    name: 'Invitations',
-    amount: inputs.invitationsCost,
+    id: 'invitations',
+    name: WEDDING_CATEGORIES.invitations.name,
+    amount: inputs.categoryCosts.invitations,
   });
-  
+
   lineItems.push({
-    name: 'Transportation',
-    amount: inputs.transportationCost,
+    id: 'transportation',
+    name: WEDDING_CATEGORIES.transportation.name,
+    amount: inputs.categoryCosts.transportation,
   });
-  
+
   lineItems.push({
-    name: 'Hair & Makeup',
-    amount: inputs.hairMakeupCost,
+    id: 'hairMakeup',
+    name: WEDDING_CATEGORIES.hairMakeup.name,
+    amount: inputs.categoryCosts.hairMakeup,
   });
-  
+
   lineItems.push({
-    name: 'Cake & Desserts',
-    amount: inputs.cakeDesertsCost,
+    id: 'cakeDesserts',
+    name: WEDDING_CATEGORIES.cakeDesserts.name,
+    amount: inputs.categoryCosts.cakeDesserts,
   });
 
   // Add items that are included at our venues but cost extra at other venues
   // These will show as $0 for our venues but with costs for other venues
   lineItems.push({
-    name: 'Tables & Chairs Rental',
+    id: 'tablesChairs',
+    name: OTHER_VENUE_CATEGORIES.tablesChairs.name,
     amount: inputs.overrides?.tablesChairs ?? OTHER_VENUE_DEFAULTS.tablesChairs,
     isIncluded: false, // Not included at other venues
   });
 
   lineItems.push({
-    name: 'Basic Décor Rentals',
+    id: 'coreDecor',
+    name: OTHER_VENUE_CATEGORIES.coreDecor.name,
     amount: inputs.overrides?.coreDecor ?? OTHER_VENUE_DEFAULTS.coreDecor,
     isIncluded: false, // Not included at other venues
   });
 
   lineItems.push({
-    name: 'External Planner/DOC',
+    id: 'externalPlanner',
+    name: OTHER_VENUE_CATEGORIES.externalPlanner.name,
     amount: inputs.overrides?.externalPlanner ?? getExternalPlannerCost(),
     isIncluded: false, // Not included at other venues
   });
 
   lineItems.push({
-    name: 'Ceremony Audio',
+    id: 'ceremonyAudio',
+    name: OTHER_VENUE_CATEGORIES.ceremonyAudio.name,
     amount: inputs.overrides?.ceremonyAudio ?? OTHER_VENUE_DEFAULTS.ceremonyAudio,
     isIncluded: false,
   });
 
   lineItems.push({
-    name: 'Cleaning',
+    id: 'cleaning',
+    name: OTHER_VENUE_CATEGORIES.cleaning.name,
     amount: inputs.overrides?.cleaning ?? OTHER_VENUE_DEFAULTS.cleaning,
     isIncluded: false, // Not included at other venues
   });
 
   lineItems.push({
-    name: 'Setup/Teardown',
+    id: 'setupTeardown',
+    name: OTHER_VENUE_CATEGORIES.setupTeardown.name,
     amount: inputs.overrides?.setupTeardown ?? OTHER_VENUE_DEFAULTS.setupTeardown,
     isIncluded: false,
   });
 
   // Calculate subtotal for service fee (other venue - includes bar costs)
-  const otherVenueServiceFeeCategories = [
-    'Food & Catering',
-    'Bar Setup Fee',
-    'Bar Service', 
-    'Photography',
-    'Videography',
-    'Flowers & Décor',
-    'DJ/Music',
-    'Transportation',
-    'Hair & Makeup',
-    'Cake & Desserts'
+  const otherVenueServiceFeeCategories: LineItemId[] = [
+    'food',
+    'barSetupFee',
+    'barService',
+    'photography',
+    'videography',
+    'flowers',
+    'djMusic',
+    'transportation',
+    'hairMakeup',
+    'cakeDesserts',
   ];
   
   const serviceSubtotal = lineItems
-    .filter(item => otherVenueServiceFeeCategories.includes(item.name))
+    .filter(item => otherVenueServiceFeeCategories.includes(item.id))
     .reduce((sum, item) => sum + item.amount, 0);
   logger.debug(`Other venue service subtotal (${otherVenueServiceFeeCategories.join(', ')}): $${serviceSubtotal}`);
 
@@ -432,7 +477,7 @@ export function calculateOtherVenue(inputs: OtherVenueInputs): CalculationResult
 
   // Calculate total of all non-venue line items
   const subtotalExVenue = lineItems
-    .filter(item => item.name !== 'Venue Fee')
+    .filter(item => item.id !== 'venueFee')
     .reduce((sum, item) => sum + item.amount, 0);
   logger.debug(`Other venue subtotal (excluding venue): $${subtotalExVenue}`);
 

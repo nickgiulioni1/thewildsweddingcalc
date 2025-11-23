@@ -153,8 +153,8 @@ describe('Wedding Cost Estimator - Calculations', () => {
       });
 
       // Find food line items
-      const buffetFood = buffetResult.lineItems.find(i => i.name === 'Food & Catering');
-      const platedFood = platedResult.lineItems.find(i => i.name === 'Food & Catering');
+      const buffetFood = buffetResult.lineItems.find(i => i.id === 'food');
+      const platedFood = platedResult.lineItems.find(i => i.id === 'food');
 
       expect(buffetFood).toBeDefined();
       expect(platedFood).toBeDefined();
@@ -186,15 +186,17 @@ describe('Wedding Cost Estimator - Calculations', () => {
         mealStyle: 'buffet',
         barService: 'openBeerWine',
         barDuration: 4,
-        foodCost: ourResult.lineItems.find(i => i.name === 'Food & Catering')?.amount ?? 0,
-        photographyCost: ourResult.lineItems.find(i => i.name === 'Photography')?.amount ?? 0,
-        videographyCost: ourResult.lineItems.find(i => i.name === 'Videography')?.amount ?? 0,
-        flowersCost: ourResult.lineItems.find(i => i.name === 'Flowers & Décor')?.amount ?? 0,
-        djMusicCost: ourResult.lineItems.find(i => i.name === 'DJ/Music')?.amount ?? 0,
-        invitationsCost: ourResult.lineItems.find(i => i.name === 'Invitations')?.amount ?? 0,
-        transportationCost: ourResult.lineItems.find(i => i.name === 'Transportation')?.amount ?? 0,
-        hairMakeupCost: ourResult.lineItems.find(i => i.name === 'Hair & Makeup')?.amount ?? 0,
-        cakeDesertsCost: ourResult.lineItems.find(i => i.name === 'Cake & Desserts')?.amount ?? 0,
+        categoryCosts: {
+          food: ourResult.lineItems.find(i => i.id === 'food')?.amount ?? 0,
+          photography: ourResult.lineItems.find(i => i.id === 'photography')?.amount ?? 0,
+          videography: ourResult.lineItems.find(i => i.id === 'videography')?.amount ?? 0,
+          flowers: ourResult.lineItems.find(i => i.id === 'flowers')?.amount ?? 0,
+          djMusic: ourResult.lineItems.find(i => i.id === 'djMusic')?.amount ?? 0,
+          invitations: ourResult.lineItems.find(i => i.id === 'invitations')?.amount ?? 0,
+          transportation: ourResult.lineItems.find(i => i.id === 'transportation')?.amount ?? 0,
+          hairMakeup: ourResult.lineItems.find(i => i.id === 'hairMakeup')?.amount ?? 0,
+          cakeDesserts: ourResult.lineItems.find(i => i.id === 'cakeDesserts')?.amount ?? 0,
+        },
       });
 
       expect(otherResult.venueFee).toBe(wildsFee - 1000);
@@ -217,29 +219,31 @@ describe('Wedding Cost Estimator - Calculations', () => {
         mealStyle: 'buffet',
         barService: 'openBeerWine',
         barDuration: 4,
-        foodCost: ourResult.lineItems.find(i => i.name === 'Food & Catering')?.amount ?? 0,
-        photographyCost: ourResult.lineItems.find(i => i.name === 'Photography')?.amount ?? 0,
-        videographyCost: ourResult.lineItems.find(i => i.name === 'Videography')?.amount ?? 0,
-        flowersCost: ourResult.lineItems.find(i => i.name === 'Flowers & Décor')?.amount ?? 0,
-        djMusicCost: ourResult.lineItems.find(i => i.name === 'DJ/Music')?.amount ?? 0,
-        invitationsCost: ourResult.lineItems.find(i => i.name === 'Invitations')?.amount ?? 0,
-        transportationCost: ourResult.lineItems.find(i => i.name === 'Transportation')?.amount ?? 0,
-        hairMakeupCost: ourResult.lineItems.find(i => i.name === 'Hair & Makeup')?.amount ?? 0,
-        cakeDesertsCost: ourResult.lineItems.find(i => i.name === 'Cake & Desserts')?.amount ?? 0,
+        categoryCosts: {
+          food: ourResult.lineItems.find(i => i.id === 'food')?.amount ?? 0,
+          photography: ourResult.lineItems.find(i => i.id === 'photography')?.amount ?? 0,
+          videography: ourResult.lineItems.find(i => i.id === 'videography')?.amount ?? 0,
+          flowers: ourResult.lineItems.find(i => i.id === 'flowers')?.amount ?? 0,
+          djMusic: ourResult.lineItems.find(i => i.id === 'djMusic')?.amount ?? 0,
+          invitations: ourResult.lineItems.find(i => i.id === 'invitations')?.amount ?? 0,
+          transportation: ourResult.lineItems.find(i => i.id === 'transportation')?.amount ?? 0,
+          hairMakeup: ourResult.lineItems.find(i => i.id === 'hairMakeup')?.amount ?? 0,
+          cakeDesserts: ourResult.lineItems.find(i => i.id === 'cakeDesserts')?.amount ?? 0,
+        },
       });
 
       // Check for the 6 items that are NOT included at Other Venue
       const expectedItems = [
-        'Tables & Chairs Rental',
-        'Basic Décor Rentals',
-        'External Planner/DOC',
-        'Ceremony Audio',
-        'Cleaning',
-        'Setup/Teardown',
+        'tablesChairs',
+        'coreDecor',
+        'externalPlanner',
+        'ceremonyAudio',
+        'cleaning',
+        'setupTeardown',
       ];
 
-      expectedItems.forEach(itemName => {
-        const item = otherResult.lineItems.find(i => i.name === itemName);
+      expectedItems.forEach(itemId => {
+        const item = otherResult.lineItems.find(i => i.id === itemId);
         expect(item).toBeDefined();
         if (item) {
           expect(item.amount).toBeGreaterThan(0);
@@ -264,15 +268,17 @@ describe('Wedding Cost Estimator - Calculations', () => {
         mealStyle: 'buffet',
         barService: 'openBeerWine',
         barDuration: 4,
-        foodCost: ourResult.lineItems.find(i => i.name === 'Food & Catering')?.amount ?? 0,
-        photographyCost: ourResult.lineItems.find(i => i.name === 'Photography')?.amount ?? 0,
-        videographyCost: ourResult.lineItems.find(i => i.name === 'Videography')?.amount ?? 0,
-        flowersCost: ourResult.lineItems.find(i => i.name === 'Flowers & Décor')?.amount ?? 0,
-        djMusicCost: ourResult.lineItems.find(i => i.name === 'DJ/Music')?.amount ?? 0,
-        invitationsCost: ourResult.lineItems.find(i => i.name === 'Invitations')?.amount ?? 0,
-        transportationCost: ourResult.lineItems.find(i => i.name === 'Transportation')?.amount ?? 0,
-        hairMakeupCost: ourResult.lineItems.find(i => i.name === 'Hair & Makeup')?.amount ?? 0,
-        cakeDesertsCost: ourResult.lineItems.find(i => i.name === 'Cake & Desserts')?.amount ?? 0,
+        categoryCosts: {
+          food: ourResult.lineItems.find(i => i.id === 'food')?.amount ?? 0,
+          photography: ourResult.lineItems.find(i => i.id === 'photography')?.amount ?? 0,
+          videography: ourResult.lineItems.find(i => i.id === 'videography')?.amount ?? 0,
+          flowers: ourResult.lineItems.find(i => i.id === 'flowers')?.amount ?? 0,
+          djMusic: ourResult.lineItems.find(i => i.id === 'djMusic')?.amount ?? 0,
+          invitations: ourResult.lineItems.find(i => i.id === 'invitations')?.amount ?? 0,
+          transportation: ourResult.lineItems.find(i => i.id === 'transportation')?.amount ?? 0,
+          hairMakeup: ourResult.lineItems.find(i => i.id === 'hairMakeup')?.amount ?? 0,
+          cakeDesserts: ourResult.lineItems.find(i => i.id === 'cakeDesserts')?.amount ?? 0,
+        },
       });
 
       expect(otherResult.total).toBeGreaterThan(ourResult.total);
@@ -318,15 +324,17 @@ describe('Wedding Cost Estimator - Calculations', () => {
         mealStyle: 'buffet',
         barService: 'openBeerWine',
         barDuration: 4,
-        foodCost: ourResult.lineItems.find(i => i.name === 'Food & Catering')?.amount ?? 0,
-        photographyCost: ourResult.lineItems.find(i => i.name === 'Photography')?.amount ?? 0,
-        videographyCost: ourResult.lineItems.find(i => i.name === 'Videography')?.amount ?? 0,
-        flowersCost: ourResult.lineItems.find(i => i.name === 'Flowers & Décor')?.amount ?? 0,
-        djMusicCost: ourResult.lineItems.find(i => i.name === 'DJ/Music')?.amount ?? 0,
-        invitationsCost: ourResult.lineItems.find(i => i.name === 'Invitations')?.amount ?? 0,
-        transportationCost: ourResult.lineItems.find(i => i.name === 'Transportation')?.amount ?? 0,
-        hairMakeupCost: ourResult.lineItems.find(i => i.name === 'Hair & Makeup')?.amount ?? 0,
-        cakeDesertsCost: ourResult.lineItems.find(i => i.name === 'Cake & Desserts')?.amount ?? 0,
+        categoryCosts: {
+          food: ourResult.lineItems.find(i => i.id === 'food')?.amount ?? 0,
+          photography: ourResult.lineItems.find(i => i.id === 'photography')?.amount ?? 0,
+          videography: ourResult.lineItems.find(i => i.id === 'videography')?.amount ?? 0,
+          flowers: ourResult.lineItems.find(i => i.id === 'flowers')?.amount ?? 0,
+          djMusic: ourResult.lineItems.find(i => i.id === 'djMusic')?.amount ?? 0,
+          invitations: ourResult.lineItems.find(i => i.id === 'invitations')?.amount ?? 0,
+          transportation: ourResult.lineItems.find(i => i.id === 'transportation')?.amount ?? 0,
+          hairMakeup: ourResult.lineItems.find(i => i.id === 'hairMakeup')?.amount ?? 0,
+          cakeDesserts: ourResult.lineItems.find(i => i.id === 'cakeDesserts')?.amount ?? 0,
+        },
       });
 
       const csv = generateCSVComparison('The Wilds', ourResult, otherResult, 150);
