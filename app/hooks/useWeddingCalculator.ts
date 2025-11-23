@@ -82,10 +82,14 @@ function getDefaultOverrides(): Partial<CategoryOverrides> {
 
 export function useWeddingCalculator(): UseWeddingCalculatorReturn {
   const savedState = loadState();
-  
+
+  const initialGuests = clamp(savedState?.guests ?? GUESTS.default, GUESTS.min, GUESTS.max);
+  const [hasHydrated, setHasHydrated] = useState(false);
+
   // Input state
   const [date, setDate] = useState<string>(savedState?.date || getDefaultDate());
-  const [guests, setGuests] = useState<number>(savedState?.guests ?? GUESTS.default);
+  const [guests, setGuestsState] = useState<number>(initialGuests);
+  const [guestsWereClamped, setGuestsWereClamped] = useState<boolean>(false);
   const [mealStyle, setMealStyle] = useState<MealStyle>((savedState?.mealStyle as MealStyle) || 'buffet');
   const [barService, setBarService] = useState<BarService>((savedState?.barService as BarService) || 'openBeerWinePremium');
   const [barDuration, setBarDuration] = useState<number>(savedState?.barDuration ?? 4);
@@ -119,6 +123,10 @@ export function useWeddingCalculator(): UseWeddingCalculatorReturn {
   const [wildsResult, setWildsResult] = useState<CalculationResult | null>(null);
   const [lauralResult, setLauralResult] = useState<CalculationResult | null>(null);
   const [otherResult, setOtherResult] = useState<CalculationResult | null>(null);
+
+  useEffect(() => {
+    setHasHydrated(true);
+  }, []);
   
   // Calculations
   useEffect(() => {
@@ -162,7 +170,7 @@ export function useWeddingCalculator(): UseWeddingCalculatorReturn {
       const guestsValidation = validateGuestCount(clampedGuests, GUESTS.min, GUESTS.max);
       setValidation(prev => ({
         ...prev,
-        guestsClamped: clampedGuests !== guests,
+        guestsClamped: guestsWereClamped || clampedGuests !== guests,
         guestsError: guestsValidation.isValid ? null : (guestsValidation.error || null),
       }));
       
@@ -237,10 +245,12 @@ export function useWeddingCalculator(): UseWeddingCalculatorReturn {
       setLauralResult(null);
       setOtherResult(null);
     }
-  }, [date, guests, mealStyle, barService, barDuration, compareMode, plannerUsed, service, tax, gratuity, contingency, overrides, otherVenueOverrides]);
+  }, [date, guests, guestsWereClamped, mealStyle, barService, barDuration, compareMode, plannerUsed, service, tax, gratuity, contingency, overrides, otherVenueOverrides]);
 
   // Save state to localStorage
   useEffect(() => {
+    if (!hasHydrated) return;
+
     saveState({
       date,
       guests,
@@ -256,7 +266,29 @@ export function useWeddingCalculator(): UseWeddingCalculatorReturn {
       overrides,
       otherVenueOverrides,
     });
-  }, [date, guests, mealStyle, barService, barDuration, compareMode, plannerUsed, service, tax, gratuity, contingency, overrides, otherVenueOverrides]);
+  }, [barDuration, barService, compareMode, contingency, date, guests, gratuity, hasHydrated, mealStyle, otherVenueOverrides, overrides, plannerUsed, service, tax]);
+
+  const setGuests = useCallback((value: number) => {
+    const clamped = clamp(value, GUESTS.min, GUESTS.max);
+    setGuestsState(clamped);
+    setGuestsWereClamped(clamped !== value);
+
+    saveState({
+      date,
+      guests: clamped,
+      mealStyle,
+      barService,
+      barDuration,
+      compareMode,
+      plannerUsed,
+      service,
+      tax,
+      gratuity,
+      contingency,
+      overrides,
+      otherVenueOverrides,
+    });
+  }, [barDuration, barService, compareMode, contingency, date, gratuity, mealStyle, otherVenueOverrides, overrides, plannerUsed, service, tax]);
 
   return {
     date,
