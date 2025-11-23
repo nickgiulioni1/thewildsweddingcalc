@@ -67,19 +67,20 @@ function generateTwoVenueCSV(wildsResult: CalculationResult, lauralResult: Calcu
   lines.push('Category,The Wilds,Laural Mill');
   
   // Line items
-  const allCategories = new Set<string>();
-  wildsResult.lineItems.forEach(item => allCategories.add(item.name));
-  lauralResult.lineItems.forEach(item => allCategories.add(item.name));
-  
-  allCategories.forEach(category => {
-    const wildsItem = wildsResult.lineItems.find(i => i.name === category);
-    const lauralItem = lauralResult.lineItems.find(i => i.name === category);
-    
+  const allCategories = new Map<string, string>();
+  wildsResult.lineItems.forEach(item => allCategories.set(item.id, item.name));
+  lauralResult.lineItems.forEach(item => allCategories.set(item.id, item.name));
+
+  allCategories.forEach((label, categoryId) => {
+    const wildsItem = wildsResult.lineItems.find(i => i.id === categoryId);
+    const lauralItem = lauralResult.lineItems.find(i => i.id === categoryId);
+
     const wildsAmount = wildsItem?.amount ?? 0;
     const lauralAmount = lauralItem?.amount ?? 0;
-    
+
     const includedNote = wildsItem?.isIncluded ? ' (Included)' : '';
-    lines.push(`"${category}${includedNote}",$${wildsAmount.toFixed(2)},$${lauralAmount.toFixed(2)}`);
+    const categoryName = wildsItem?.name || lauralItem?.name || label;
+    lines.push(`"${categoryName}${includedNote}",$${wildsAmount.toFixed(2)},$${lauralAmount.toFixed(2)}`);
   });
   
   lines.push('');
@@ -103,22 +104,25 @@ function generateThreeVenueCSV(wildsResult: CalculationResult, lauralResult: Cal
   lines.push('Category,The Wilds,Laural Mill,Other Venue');
   
   // Line items
-  const allCategories = new Set<string>();
-  wildsResult.lineItems.forEach(item => allCategories.add(item.name));
-  lauralResult.lineItems.forEach(item => allCategories.add(item.name));
-  otherResult.lineItems.forEach(item => allCategories.add(item.name));
-  
-  allCategories.forEach(category => {
-    const wildsItem = wildsResult.lineItems.find(i => i.name === category);
-    const lauralItem = lauralResult.lineItems.find(i => i.name === category);
-    const otherItem = otherResult.lineItems.find(i => i.name === category);
-    
+  const allCategories = new Map<string, string>();
+  wildsResult.lineItems.forEach(item => allCategories.set(item.id, item.name));
+  lauralResult.lineItems.forEach(item => allCategories.set(item.id, item.name));
+  otherResult.lineItems.forEach(item => allCategories.set(item.id, item.name));
+
+  allCategories.forEach((label, categoryId) => {
+    const wildsItem = wildsResult.lineItems.find(i => i.id === categoryId);
+    const lauralItem = lauralResult.lineItems.find(i => i.id === categoryId);
+    const otherItem = otherResult.lineItems.find(i => i.id === categoryId);
+
     const wildsAmount = wildsItem?.amount ?? 0;
     const lauralAmount = lauralItem?.amount ?? 0;
     const otherAmount = otherItem?.amount ?? 0;
-    
+
     const includedNote = wildsItem?.isIncluded ? ' (Included at our venues)' : '';
-    lines.push(`"${category}${includedNote}",$${wildsAmount.toFixed(2)},$${lauralAmount.toFixed(2)},$${otherAmount.toFixed(2)}`);
+    const categoryName = wildsItem?.name || lauralItem?.name || otherItem?.name || label;
+    lines.push(
+      `"${categoryName}${includedNote}",$${wildsAmount.toFixed(2)},$${lauralAmount.toFixed(2)},$${otherAmount.toFixed(2)}`
+    );
   });
   
   lines.push('');

@@ -206,9 +206,9 @@ export function useWeddingCalculator(): UseWeddingCalculatorReturn {
       if (compareMode) {
         const lineItemsMap = new Map<string, number>();
         wildsCalc.lineItems.forEach(item => {
-          lineItemsMap.set(item.name, item.amount);
+          lineItemsMap.set(item.id, item.amount);
         });
-        
+
         const otherCalc = calculateOtherVenue({
           date,
           guests: clampedGuests,
@@ -217,15 +217,17 @@ export function useWeddingCalculator(): UseWeddingCalculatorReturn {
           barDuration,
           percentages,
           overrides: { ...overrides, ...otherVenueOverrides },
-          foodCost: lineItemsMap.get('Food & Catering') ?? 0,
-          photographyCost: lineItemsMap.get('Photography') ?? 0,
-          videographyCost: lineItemsMap.get('Videography') ?? 0,
-          flowersCost: lineItemsMap.get('Flowers & Décor') ?? 0,
-          djMusicCost: lineItemsMap.get('DJ/Music') ?? 0,
-          invitationsCost: lineItemsMap.get('Invitations') ?? 0,
-          transportationCost: lineItemsMap.get('Transportation') ?? 0,
-          hairMakeupCost: lineItemsMap.get('Hair & Makeup') ?? 0,
-          cakeDesertsCost: lineItemsMap.get('Cake & Desserts') ?? 0,
+          categoryCosts: {
+            food: lineItemsMap.get('food') ?? 0,
+            photography: lineItemsMap.get('photography') ?? 0,
+            videography: lineItemsMap.get('videography') ?? 0,
+            flowers: lineItemsMap.get('flowers') ?? 0,
+            djMusic: lineItemsMap.get('djMusic') ?? 0,
+            invitations: lineItemsMap.get('invitations') ?? 0,
+            transportation: lineItemsMap.get('transportation') ?? 0,
+            hairMakeup: lineItemsMap.get('hairMakeup') ?? 0,
+            cakeDesserts: lineItemsMap.get('cakeDesserts') ?? 0,
+          },
         });
         setOtherResult(otherCalc);
       } else {

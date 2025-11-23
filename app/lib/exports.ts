@@ -64,23 +64,22 @@ export function generateCSVComparison(
   lines.push('');
   lines.push(`Category,${ourVenueName},Other Venue,Difference (Other - Ours)`);
   
-  // Match line items by name
-  const allCategories = new Set<string>();
-  ourResult.lineItems.forEach(item => allCategories.add(item.name));
-  otherResult.lineItems.forEach(item => allCategories.add(item.name));
-  
-  allCategories.forEach(category => {
-    const ourItem = ourResult.lineItems.find(i => i.name === category);
-    const otherItem = otherResult.lineItems.find(i => i.name === category);
-    
+  // Match line items by stable id
+  const allCategories = new Map<string, string>();
+  ourResult.lineItems.forEach(item => allCategories.set(item.id, item.name));
+  otherResult.lineItems.forEach(item => allCategories.set(item.id, item.name));
+
+  allCategories.forEach((label, categoryId) => {
+    const ourItem = ourResult.lineItems.find(i => i.id === categoryId);
+    const otherItem = otherResult.lineItems.find(i => i.id === categoryId);
+
     const ourAmount = ourItem?.amount ?? 0;
     const otherAmount = otherItem?.amount ?? 0;
     const diff = otherAmount - ourAmount;
-    
+
     const includedNote = ourItem?.isIncluded ? ' (Included at our venue)' : '';
-    lines.push(
-      `"${category}${includedNote}",$${ourAmount.toFixed(2)},$${otherAmount.toFixed(2)},$${diff.toFixed(2)}`
-    );
+    const categoryName = ourItem?.name || otherItem?.name || label;
+    lines.push(`"${categoryName}${includedNote}",$${ourAmount.toFixed(2)},$${otherAmount.toFixed(2)},$${diff.toFixed(2)}`);
   });
   
   // Venue fees

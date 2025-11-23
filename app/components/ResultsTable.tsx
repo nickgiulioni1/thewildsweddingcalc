@@ -25,17 +25,17 @@ export function ResultsTable({ wildsResult, lauralResult, otherResult, guests, c
 
 function renderTwoVenues(wildsResult: CalculationResult, lauralResult: CalculationResult, _guests: number) {
   // Combine all category names and create Maps for O(1) lookups
-  const allCategories = new Set<string>();
+  const allCategories = new Map<string, string>();
   const wildsMap = new Map<string, typeof wildsResult.lineItems[0]>();
   const lauralMap = new Map<string, typeof lauralResult.lineItems[0]>();
-  
+
   wildsResult.lineItems.forEach(item => {
-    allCategories.add(item.name);
-    wildsMap.set(item.name, item);
+    allCategories.set(item.id, item.name);
+    wildsMap.set(item.id, item);
   });
   lauralResult.lineItems.forEach(item => {
-    allCategories.add(item.name);
-    lauralMap.set(item.name, item);
+    allCategories.set(item.id, item.name);
+    lauralMap.set(item.id, item);
   });
 
   return (
@@ -58,17 +58,19 @@ function renderTwoVenues(wildsResult: CalculationResult, lauralResult: Calculati
           </tr>
         </thead>
         <tbody>
-          {Array.from(allCategories).map((category, idx) => {
-            const wildsItem = wildsMap.get(category);
-            const lauralItem = lauralMap.get(category);
-            
+          {Array.from(allCategories.entries()).map(([categoryId, label], idx) => {
+            const wildsItem = wildsMap.get(categoryId);
+            const lauralItem = lauralMap.get(categoryId);
+
+            const displayName = wildsItem?.name || lauralItem?.name || label;
+
             const wildsAmount = wildsItem?.amount ?? 0;
             const lauralAmount = lauralItem?.amount ?? 0;
             
             return (
               <tr key={idx}>
                 <td class="category-name" data-label="Category">
-                  {category}
+                  {displayName}
                   {wildsItem?.isIncluded && (
                     <span class="included-marker" title="Included at our venues">
                       ✓ Included
@@ -130,22 +132,22 @@ function renderTwoVenues(wildsResult: CalculationResult, lauralResult: Calculati
 
 function renderThreeVenues(wildsResult: CalculationResult, lauralResult: CalculationResult, otherResult: CalculationResult, _guests: number) {
   // Combine all category names and create Maps for O(1) lookups
-  const allCategories = new Set<string>();
+  const allCategories = new Map<string, string>();
   const wildsMap = new Map<string, typeof wildsResult.lineItems[0]>();
   const lauralMap = new Map<string, typeof lauralResult.lineItems[0]>();
   const otherMap = new Map<string, typeof otherResult.lineItems[0]>();
-  
+
   wildsResult.lineItems.forEach(item => {
-    allCategories.add(item.name);
-    wildsMap.set(item.name, item);
+    allCategories.set(item.id, item.name);
+    wildsMap.set(item.id, item);
   });
   lauralResult.lineItems.forEach(item => {
-    allCategories.add(item.name);
-    lauralMap.set(item.name, item);
+    allCategories.set(item.id, item.name);
+    lauralMap.set(item.id, item);
   });
   otherResult.lineItems.forEach(item => {
-    allCategories.add(item.name);
-    otherMap.set(item.name, item);
+    allCategories.set(item.id, item.name);
+    otherMap.set(item.id, item);
   });
 
   return (
@@ -169,11 +171,13 @@ function renderThreeVenues(wildsResult: CalculationResult, lauralResult: Calcula
           </tr>
         </thead>
         <tbody>
-          {Array.from(allCategories).map((category, idx) => {
-            const wildsItem = wildsMap.get(category);
-            const lauralItem = lauralMap.get(category);
-            const otherItem = otherMap.get(category);
-            
+          {Array.from(allCategories.entries()).map(([categoryId, label], idx) => {
+            const wildsItem = wildsMap.get(categoryId);
+            const lauralItem = lauralMap.get(categoryId);
+            const otherItem = otherMap.get(categoryId);
+
+            const displayName = wildsItem?.name || lauralItem?.name || otherItem?.name || label;
+
             const wildsAmount = wildsItem?.amount ?? 0;
             const lauralAmount = lauralItem?.amount ?? 0;
             const otherAmount = otherItem?.amount ?? 0;
@@ -181,7 +185,7 @@ function renderThreeVenues(wildsResult: CalculationResult, lauralResult: Calcula
             return (
               <tr key={idx}>
                 <td class="category-name" data-label="Category">
-                  {category}
+                  {displayName}
                   {wildsItem?.isIncluded && (
                     <span class="included-marker" title="Included at our venues">
                       ✓ Included
