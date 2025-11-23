@@ -4,6 +4,8 @@ import { useEffect } from 'preact/hooks';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useValidationHandlers } from '../app/hooks/useValidationHandlers';
 import { useOverrideHandlers } from '../app/hooks/useOverrideHandlers';
+import { useWeddingCalculator } from '../app/hooks/useWeddingCalculator';
+import * as storage from '../app/lib/storage';
 import { GUESTS, WEDDING_CATEGORIES, OTHER_VENUE_DEFAULTS, EXTERNAL_PLANNER_COST } from '../config/config';
 
 const flushEffects = () => new Promise(resolve => setTimeout(resolve, 0));
@@ -212,6 +214,72 @@ describe('Hook handlers', () => {
 
       expect(overrides.externalPlanner).toBe(EXTERNAL_PLANNER_COST);
       expect(overrides.food).toBeUndefined();
+    });
+  });
+
+  describe('useWeddingCalculator integration', () => {
+    let container;
+
+    beforeEach(() => {
+      container = document.createElement('div');
+      localStorage.clear();
+      vi.restoreAllMocks();
+    });
+
+    it('clamps guests and persists normalized values', async () => {
+      let calculator = null;
+      const saveSpy = vi.spyOn(storage, 'saveState');
+
+      function Component() {
+        calculator = useWeddingCalculator();
+        return null;
+      }
+
+      render(<Component />, container);
+      await flushEffects();
+
+      calculator?.setGuests(GUESTS.max + 25);
+      await flushEffects();
+      await flushEffects();
+      await flushEffects();
+
+      expect(calculator?.guests).toBe(GUESTS.max);
+
+      let storedGuests = JSON.parse(localStorage.getItem('wedding-cost-estimator-state') ?? '{}').guests;
+      for (let i = 0; i < 5 && storedGuests !== GUESTS.max; i++) {
+        await flushEffects();
+        storedGuests = JSON.parse(localStorage.getItem('wedding-cost-estimator-state') ?? '{}').guests;
+      }
+
+      const savedGuestsCalls = saveSpy.mock.calls.map(call => call[0]?.guests);
+      expect(savedGuestsCalls).toContain(GUESTS.max);
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ guests: GUESTS.max }));
+      expect(storedGuests).toBe(GUESTS.max);
+
+      render(null, container);
+      await flushEffects();
+
+      calculator = null;
+      render(<Component />, container);
+      await flushEffects();
+
+      expect(calculator?.guests).toBe(GUESTS.max);
+
+      calculator?.setGuests(GUESTS.min - 10);
+      await flushEffects();
+      await flushEffects();
+      await flushEffects();
+
+      expect(calculator?.guests).toBe(GUESTS.min);
+
+      let reloadedGuests = JSON.parse(localStorage.getItem('wedding-cost-estimator-state') ?? '{}').guests;
+      for (let i = 0; i < 5 && reloadedGuests !== GUESTS.min; i++) {
+        await flushEffects();
+        reloadedGuests = JSON.parse(localStorage.getItem('wedding-cost-estimator-state') ?? '{}').guests;
+      }
+
+      expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ guests: GUESTS.min }));
+      expect(reloadedGuests).toBe(GUESTS.min);
     });
   });
 });
