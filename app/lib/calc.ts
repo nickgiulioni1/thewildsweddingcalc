@@ -1,3 +1,23 @@
+/**
+ * Wedding Cost Calculator - Core Calculation Module
+ *
+ * This module contains the main calculation logic for estimating wedding costs
+ * at The Wilds and Laural Mill venues, as well as comparison with typical "other venues".
+ *
+ * ## Calculation Order
+ * The calculations follow a specific order to ensure accurate totals:
+ * 1. Line items calculated (food, bar, photography, etc.)
+ * 2. Venue fee applied (separate from service percentage)
+ * 3. Service % applied to line items ONLY (not venue fee)
+ * 4. Tax % applied to (line items + service)
+ * 5. Gratuity % applied to line items only
+ * 6. Subtotal with fees = line items + venue fee + service + tax + gratuity
+ * 7. Contingency % applied to subtotal
+ * 8. Final total = subtotal with fees + contingency
+ *
+ * @module calc
+ */
+
 import {
   Venue,
   MealStyle,
@@ -20,8 +40,13 @@ import {
 } from './defaults';
 import { logger } from './logger';
 
+/** Wedding category identifier type */
 export type WeddingCategoryId = keyof typeof WEDDING_CATEGORIES;
 
+/**
+ * All possible line item identifiers used in calculation results.
+ * Includes venue fees, bar costs, standard wedding categories, and other venue extras.
+ */
 export type LineItemId =
   | 'venueFee'
   | 'barSetupFee'
@@ -35,88 +60,196 @@ export type LineItemId =
   | 'setupTeardown'
   | 'externalPlanner';
 
+/**
+ * Represents a single line item in the cost breakdown.
+ * Line items are individual expenses that make up the wedding budget.
+ */
 export interface LineItem {
+  /** Unique identifier for this line item */
   id: LineItemId;
+  /** Human-readable display name */
   name: string;
+  /** Total cost for this line item */
   amount: number;
+  /** Per-guest cost (if applicable) */
   perGuest?: number;
-  isIncluded?: boolean; // True if included at our venue
+  /** Whether this item is included at our venue (shows as $0) */
+  isIncluded?: boolean;
 }
 
+/**
+ * Input parameters for calculating costs at our venues (The Wilds or Laural Mill).
+ */
 export interface CalculationInputs {
+  /** Which venue to calculate for */
   venue: Venue;
+  /** Wedding date in ISO format (YYYY-MM-DD) */
   date: string;
+  /** Expected number of guests (will be clamped to valid range) */
   guests: number;
+  /** Selected meal service style */
   mealStyle: MealStyle;
+  /** Whether an external planner is being used */
   plannerUsed: boolean;
+  /** Selected bar service type */
   barService: BarService;
+  /** Bar service duration in hours (1-6) */
   barDuration: number;
+  /** User-specified cost overrides for categories */
   overrides?: Partial<CategoryOverrides>;
+  /** User-specified percentage overrides */
   percentages?: Partial<typeof PERCENTAGES>;
 }
 
+/**
+ * User-customizable cost overrides for wedding categories.
+ * When provided, these values replace the calculated defaults.
+ */
 export interface CategoryOverrides {
+  /** Food and catering total */
   food: number;
+  /** Bar service total (excluding setup fee) */
   bar: number;
+  /** Photography services */
   photography: number;
+  /** Videography services */
   videography: number;
+  /** Flowers and décor */
   flowers: number;
+  /** DJ and music entertainment */
   djMusic: number;
+  /** Invitations and stationery */
   invitations: number;
+  /** Guest transportation */
   transportation: number;
+  /** Hair and makeup services */
   hairMakeup: number;
+  /** Cake and desserts */
   cakeDesserts: number;
+  /** External wedding planner */
   externalPlanner: number;
+  /** Tables and chairs rental */
   tablesChairs: number;
+  /** Core venue décor */
   coreDecor: number;
+  /** Day-of coordination services */
   dayOfCoordination: number;
+  /** Post-event cleaning */
   cleaning: number;
 }
 
+/**
+ * Complete calculation result with all cost components.
+ */
 export interface CalculationResult {
+  /** All individual line items */
   lineItems: LineItem[];
+  /** Venue rental fee */
   venueFee: number;
+  /** Subtotal of all items excluding venue fee */
   subtotalExVenue: number;
+  /** Calculated service fee */
   service: number;
+  /** Calculated tax amount */
   tax: number;
+  /** Calculated gratuity amount */
   gratuity: number;
+  /** Subtotal including venue fee and all fees (before contingency) */
   subtotalWithFees: number;
+  /** Contingency buffer amount */
   contingency: number;
+  /** Final total estimate */
   total: number;
+  /** Cost per guest */
   perGuest: number;
 }
 
+/**
+ * Input parameters for calculating costs at a typical "other venue".
+ * Used for side-by-side comparison to demonstrate value.
+ */
 export interface OtherVenueInputs {
+  /** Wedding date in ISO format (YYYY-MM-DD) */
   date: string;
+  /** Expected number of guests */
   guests: number;
+  /** Selected meal service style */
   mealStyle: MealStyle;
+  /** Selected bar service type */
   barService: BarService;
+  /** Bar service duration in hours */
   barDuration: number;
+  /** User-specified cost overrides */
   overrides?: Partial<OtherVenueOverrides>;
+  /** User-specified percentage overrides */
   percentages?: Partial<typeof PERCENTAGES>;
-  // Use same food/bar/category costs as our venue for fair comparison
+  /**
+   * Category costs to use from our venue calculation.
+   * Ensures fair comparison by using same base costs.
+   */
   categoryCosts: Record<WeddingCategoryId, number>;
 }
 
+/**
+ * User-customizable cost overrides specific to other venues.
+ * These represent items that are typically not included at other venues.
+ */
 export interface OtherVenueOverrides {
+  /** Other venue rental fee */
   venueFee: number;
+  /** Bar setup and breakdown fee */
   barSetupFee: number;
+  /** Bar service total */
   bar: number;
+  /** Tables and chairs rental */
   tablesChairs: number;
+  /** Core venue décor */
   coreDecor: number;
+  /** Day-of coordination (not included) */
   dayOfCoordination: number;
+  /** Ceremony audio equipment */
   ceremonyAudio: number;
+  /** Setup and teardown labor */
   setupTeardown: number;
+  /** Post-event cleaning */
   cleaning: number;
+  /** External planner (required at other venues) */
   externalPlanner: number;
 }
 
 /**
- * Calculate wedding costs for our venue (The Wilds or Laural Mill)
+ * Calculates wedding costs for our venue (The Wilds or Laural Mill).
+ *
+ * This function computes a complete cost breakdown including:
+ * - Venue fee based on date and day of week
+ * - Food and catering costs based on guest count and meal style
+ * - Bar service costs based on duration and service level
+ * - Additional wedding categories (photography, flowers, etc.)
+ * - Service fees, taxes, gratuity, and contingency buffer
+ *
+ * Items included at our venues (tables, chairs, décor, coordination, cleaning)
+ * are shown as $0 to highlight the value proposition.
+ *
+ * @param inputs - Calculation parameters including venue, date, guests, and options
+ * @returns Complete calculation result with line items and totals
+ *
+ * @example
+ * ```typescript
+ * const result = calculateOurVenue({
+ *   venue: 'wilds',
+ *   date: '2025-06-15',
+ *   guests: 150,
+ *   mealStyle: 'plated',
+ *   plannerUsed: false,
+ *   barService: 'openBeerWinePremium',
+ *   barDuration: 4,
+ * });
+ * console.log(`Total: $${result.total}`);
+ * ```
  */
 export function calculateOurVenue(inputs: CalculationInputs): CalculationResult {
   logger.debug('Calculating costs for our venue:', inputs.venue);
-  
+
   const clampedGuests = clampGuests(inputs.guests);
   const band = getBand(inputs.date);
   const venueFee = getVenueFee(inputs.venue, band);
@@ -158,21 +291,21 @@ export function calculateOurVenue(inputs: CalculationInputs): CalculationResult 
     amount: 0,
     isIncluded: true,
   });
-  
+
   lineItems.push({
     id: 'coreDecor',
     name: OTHER_VENUE_CATEGORIES.coreDecor.name,
     amount: 0,
     isIncluded: true,
   });
-  
+
   lineItems.push({
     id: 'dayOfCoordination',
     name: OTHER_VENUE_CATEGORIES.dayOfCoordination.name,
     amount: 0,
     isIncluded: true,
   });
-  
+
   lineItems.push({
     id: 'cleaning',
     name: OTHER_VENUE_CATEGORIES.cleaning.name,
@@ -191,7 +324,7 @@ export function calculateOurVenue(inputs: CalculationInputs): CalculationResult 
 
   // Additional categories
   const categories = getDefaultCategories();
-  
+
   lineItems.push({
     id: 'photography',
     name: categories.photography.name,
@@ -249,6 +382,7 @@ export function calculateOurVenue(inputs: CalculationInputs): CalculationResult 
     });
   }
 
+  // Calculate subtotal excluding venue fee
   const subtotalExVenue = lineItems
     .filter(item => item.id !== 'venueFee')
     .reduce((sum, item) => sum + item.amount, 0);
@@ -257,7 +391,7 @@ export function calculateOurVenue(inputs: CalculationInputs): CalculationResult 
   const serviceSubtotal = subtotalExVenue;
   logger.debug(`Our venue service subtotal (all non-venue items): $${serviceSubtotal}`);
 
-  // Apply service % to specific categories only
+  // Apply service % to specific categories only (not venue fee)
   const service = (serviceSubtotal * percentages.service) / 100;
   logger.debug(`Service (${percentages.service}% of $${serviceSubtotal}): $${service}`);
 
@@ -299,14 +433,49 @@ export function calculateOurVenue(inputs: CalculationInputs): CalculationResult 
 }
 
 /**
- * Calculate wedding costs for a typical "Other Venue"
+ * Calculates wedding costs for a typical "other venue".
+ *
+ * This function estimates costs at a venue that doesn't include the amenities
+ * provided by The Wilds and Laural Mill. It's used for side-by-side comparison
+ * to demonstrate the value proposition of our venues.
+ *
+ * Key differences from our venue calculation:
+ * - Venue fee defaults to Wilds fee minus $1,000
+ * - Adds costs for items included at our venues:
+ *   - Tables & Chairs ($1,500)
+ *   - Core Décor ($1,200)
+ *   - External Planner/DOC ($2,000)
+ *   - Ceremony Audio ($500)
+ *   - Cleaning ($350)
+ *   - Setup/Teardown ($750)
+ *
+ * Food and bar costs are kept the same as our venue for fair comparison.
+ *
+ * @param inputs - Calculation parameters including date, guests, and category costs
+ * @returns Complete calculation result with line items and totals
+ *
+ * @example
+ * ```typescript
+ * const otherResult = calculateOtherVenue({
+ *   date: '2025-06-15',
+ *   guests: 150,
+ *   mealStyle: 'plated',
+ *   barService: 'openBeerWinePremium',
+ *   barDuration: 4,
+ *   categoryCosts: {
+ *     food: 7800,
+ *     photography: 2000,
+ *     // ... other categories from our venue calculation
+ *   },
+ * });
+ * ```
  */
 export function calculateOtherVenue(inputs: OtherVenueInputs): CalculationResult {
   logger.debug('Calculating costs for Other Venue');
-  
+
   const clampedGuests = clampGuests(inputs.guests);
   const band = getBand(inputs.date);
-  
+
   // Other venue fee = Wilds fee - $1,000 (for same date/band)
   const wildsFee = VENUE_FEES.wilds[band];
   const venueFee = inputs.overrides?.venueFee ?? (wildsFee - 1000);
@@ -400,26 +569,25 @@ export function calculateOtherVenue(inputs: OtherVenueInputs): CalculationResult
   });
 
   // Add items that are included at our venues but cost extra at other venues
-  // These will show as $0 for our venues but with costs for other venues
   lineItems.push({
     id: 'tablesChairs',
     name: OTHER_VENUE_CATEGORIES.tablesChairs.name,
     amount: inputs.overrides?.tablesChairs ?? OTHER_VENUE_DEFAULTS.tablesChairs,
-    isIncluded: false, // Not included at other venues
+    isIncluded: false,
   });
 
   lineItems.push({
     id: 'coreDecor',
     name: OTHER_VENUE_CATEGORIES.coreDecor.name,
     amount: inputs.overrides?.coreDecor ?? OTHER_VENUE_DEFAULTS.coreDecor,
-    isIncluded: false, // Not included at other venues
+    isIncluded: false,
   });
 
   lineItems.push({
     id: 'externalPlanner',
     name: OTHER_VENUE_CATEGORIES.externalPlanner.name,
     amount: inputs.overrides?.externalPlanner ?? getExternalPlannerCost(),
-    isIncluded: false, // Not included at other venues
+    isIncluded: false,
   });
 
   lineItems.push({
@@ -433,7 +601,7 @@ export function calculateOtherVenue(inputs: OtherVenueInputs): CalculationResult
     id: 'cleaning',
     name: OTHER_VENUE_CATEGORIES.cleaning.name,
     amount: inputs.overrides?.cleaning ?? OTHER_VENUE_DEFAULTS.cleaning,
-    isIncluded: false, // Not included at other venues
+    isIncluded: false,
   });
 
   lineItems.push({
@@ -456,7 +624,7 @@ export function calculateOtherVenue(inputs: OtherVenueInputs): CalculationResult
     'hairMakeup',
     'cakeDesserts',
   ];
-  
+
   const serviceSubtotal = lineItems
     .filter(item => otherVenueServiceFeeCategories.includes(item.id))
     .reduce((sum, item) => sum + item.amount, 0);
@@ -508,4 +676,3 @@ export function calculateOtherVenue(inputs: OtherVenueInputs): CalculationResult
     perGuest,
   };
 }
-

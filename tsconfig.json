@@ -20,7 +20,7 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["app", "config", "tests"],
+  "include": ["app", "config"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
 

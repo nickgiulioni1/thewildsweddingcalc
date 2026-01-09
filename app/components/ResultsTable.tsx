@@ -1,5 +1,14 @@
 import { h } from 'preact'; // eslint-disable-line @typescript-eslint/no-unused-vars
 import { CalculationResult } from '../lib/calc';
+import { VenueHeader } from './results/VenueHeader';
+import { CategoryRow, SectionHeaderRow, FeeRow, TotalRow } from './results/CategoryRow';
+
+/** Venue configuration for display */
+interface VenueConfig {
+  name: string;
+  url?: string;
+  result: CalculationResult;
+}
 
 interface ResultsTableProps {
   wildsResult: CalculationResult;
@@ -9,243 +18,122 @@ interface ResultsTableProps {
   compareMode: boolean;
 }
 
-export function ResultsTable({ wildsResult, lauralResult, otherResult, guests, compareMode }: ResultsTableProps) {
-  // ResultsTable rendered - removed console.log per logger utility
+/**
+ * Main results table component that displays cost breakdowns for venues.
+ * Renders either 2 venues (our venues) or 3 venues (with comparison).
+ */
+export function ResultsTable({ wildsResult, lauralResult, otherResult, compareMode }: ResultsTableProps) {
+  const venues: VenueConfig[] = [
+    { name: 'The Wilds', url: 'https://thewildsvenue.com/', result: wildsResult },
+    { name: 'Laural Mill', url: 'https://lauralmill.com/', result: lauralResult },
+  ];
 
-  if (!compareMode) {
-    return renderTwoVenues(wildsResult, lauralResult, guests);
+  if (compareMode && otherResult) {
+    venues.push({ name: 'Other Venue', result: otherResult });
   }
 
-  if (!otherResult) {
-    return renderTwoVenues(wildsResult, lauralResult, guests);
-  }
-
-  return renderThreeVenues(wildsResult, lauralResult, otherResult, guests);
+  return <VenueComparisonTable venues={venues} />;
 }
 
-function renderTwoVenues(wildsResult: CalculationResult, lauralResult: CalculationResult, _guests: number) {
+interface VenueComparisonTableProps {
+  venues: VenueConfig[];
+}
+
+/**
+ * Renders a comparison table for the given venues.
+ * Combines line items from all venues and displays them in a unified table.
+ */
+function VenueComparisonTable({ venues }: VenueComparisonTableProps) {
   // Combine all category names and create Maps for O(1) lookups
   const allCategories = new Map<string, string>();
-  const wildsMap = new Map<string, typeof wildsResult.lineItems[0]>();
-  const lauralMap = new Map<string, typeof lauralResult.lineItems[0]>();
+  const venueMaps = venues.map(() => new Map<string, typeof venues[0]['result']['lineItems'][0]>());
 
-  wildsResult.lineItems.forEach(item => {
-    allCategories.set(item.id, item.name);
-    wildsMap.set(item.id, item);
+  venues.forEach((venue, venueIdx) => {
+    venue.result.lineItems.forEach(item => {
+      allCategories.set(item.id, item.name);
+      venueMaps[venueIdx].set(item.id, item);
+    });
   });
-  lauralResult.lineItems.forEach(item => {
-    allCategories.set(item.id, item.name);
-    lauralMap.set(item.id, item);
-  });
+
+  const colSpan = venues.length + 1;
+  const showGratuity = venues.some(v => v.result.gratuity > 0);
 
   return (
     <div class="results-section">
-      <h2>Cost Breakdown</h2>
-      <table class="results-table" role="table" aria-label="Detailed cost breakdown for The Wilds and Laural Mill venues">
+      <h2>{venues.length > 2 ? 'Cost Comparison' : 'Cost Breakdown'}</h2>
+      <table
+        class="results-table"
+        role="table"
+        aria-label={
+          venues.length > 2
+            ? 'Side-by-side cost comparison of The Wilds, Laural Mill, and Other Venue'
+            : 'Detailed cost breakdown for The Wilds and Laural Mill venues'
+        }
+      >
         <thead>
           <tr>
             <th>Category</th>
-            <th class="amount">
-              <a href="https://thewildsvenue.com/" target="_blank" rel="noopener noreferrer" class="venue-link-header">
-                The Wilds
-              </a>
-            </th>
-            <th class="amount">
-              <a href="https://lauralmill.com/" target="_blank" rel="noopener noreferrer" class="venue-link-header">
-                Laural Mill
-              </a>
-            </th>
+            {venues.map((venue, idx) => (
+              <VenueHeader key={idx} name={venue.name} url={venue.url} />
+            ))}
           </tr>
         </thead>
         <tbody>
-          {Array.from(allCategories.entries()).map(([categoryId, label], idx) => {
-            const wildsItem = wildsMap.get(categoryId);
-            const lauralItem = lauralMap.get(categoryId);
+          {/* Line items */}
+          {Array.from(allCategories.entries()).map(([categoryId, label]) => {
+            const items = venueMaps.map(map => map.get(categoryId));
+            const displayName = items.find(item => item?.name)?.name || label;
+            const isIncluded = items[0]?.isIncluded;
 
-            const displayName = wildsItem?.name || lauralItem?.name || label;
-
-            const wildsAmount = wildsItem?.amount ?? 0;
-            const lauralAmount = lauralItem?.amount ?? 0;
-            
             return (
-              <tr key={idx}>
-                <td class="category-name" data-label="Category">
-                  {displayName}
-                  {wildsItem?.isIncluded && (
-                    <span class="included-marker" title="Included at our venues">
-                      ✓ Included
-                    </span>
-                  )}
-                </td>
-                <td class="amount" data-label="The Wilds">${wildsAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td class="amount" data-label="Laural Mill">${lauralAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              </tr>
+              <CategoryRow
+                key={categoryId}
+                name={displayName}
+                isIncluded={isIncluded}
+                amounts={venues.map((venue, idx) => ({
+                  value: items[idx]?.amount ?? 0,
+                  label: venue.name,
+                }))}
+              />
             );
           })}
-          
-          <tr class="section-header">
-            <td colSpan={3} data-label=""><strong>Taxes & Fees</strong></td>
-          </tr>
-          
-          <tr>
-            <td class="category-name" data-label="Category">Service Fee</td>
-            <td class="amount" data-label="The Wilds">${wildsResult.service.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="amount" data-label="Laural Mill">${lauralResult.service.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          </tr>
-          
-          <tr>
-            <td class="category-name" data-label="Category">Tax</td>
-            <td class="amount" data-label="The Wilds">${wildsResult.tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="amount" data-label="Laural Mill">${lauralResult.tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          </tr>
-          
-          {(wildsResult.gratuity > 0 || lauralResult.gratuity > 0) && (
-            <tr>
-              <td class="category-name" data-label="Category">Gratuity</td>
-              <td class="amount" data-label="The Wilds">${wildsResult.gratuity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              <td class="amount" data-label="Laural Mill">${lauralResult.gratuity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            </tr>
+
+          {/* Taxes & Fees section */}
+          <SectionHeaderRow label="Taxes & Fees" colSpan={colSpan} />
+
+          <FeeRow
+            label="Service Fee"
+            amounts={venues.map(v => ({ value: v.result.service, venueLabel: v.name }))}
+          />
+
+          <FeeRow
+            label="Tax"
+            amounts={venues.map(v => ({ value: v.result.tax, venueLabel: v.name }))}
+          />
+
+          {showGratuity && (
+            <FeeRow
+              label="Gratuity"
+              amounts={venues.map(v => ({ value: v.result.gratuity, venueLabel: v.name }))}
+            />
           )}
-          
-          <tr>
-            <td class="category-name" data-label="Category">Contingency Buffer</td>
-            <td class="amount" data-label="The Wilds">${wildsResult.contingency.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="amount" data-label="Laural Mill">${lauralResult.contingency.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          </tr>
-          
-          <tr class="total-row">
-            <td data-label=""><strong>TOTAL ESTIMATE</strong></td>
-            <td class="amount" data-label="The Wilds">${wildsResult.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="amount" data-label="Laural Mill">${lauralResult.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          </tr>
-          
-          <tr class="total-row">
-            <td data-label=""><strong>Per Guest</strong></td>
-            <td class="amount" data-label="The Wilds">${wildsResult.perGuest.toFixed(2)}</td>
-            <td class="amount" data-label="Laural Mill">${lauralResult.perGuest.toFixed(2)}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
-function renderThreeVenues(wildsResult: CalculationResult, lauralResult: CalculationResult, otherResult: CalculationResult, _guests: number) {
-  // Combine all category names and create Maps for O(1) lookups
-  const allCategories = new Map<string, string>();
-  const wildsMap = new Map<string, typeof wildsResult.lineItems[0]>();
-  const lauralMap = new Map<string, typeof lauralResult.lineItems[0]>();
-  const otherMap = new Map<string, typeof otherResult.lineItems[0]>();
+          <FeeRow
+            label="Contingency Buffer"
+            amounts={venues.map(v => ({ value: v.result.contingency, venueLabel: v.name }))}
+          />
 
-  wildsResult.lineItems.forEach(item => {
-    allCategories.set(item.id, item.name);
-    wildsMap.set(item.id, item);
-  });
-  lauralResult.lineItems.forEach(item => {
-    allCategories.set(item.id, item.name);
-    lauralMap.set(item.id, item);
-  });
-  otherResult.lineItems.forEach(item => {
-    allCategories.set(item.id, item.name);
-    otherMap.set(item.id, item);
-  });
+          {/* Totals */}
+          <TotalRow
+            label="TOTAL ESTIMATE"
+            amounts={venues.map(v => ({ value: v.result.total, venueLabel: v.name }))}
+          />
 
-  return (
-    <div class="results-section">
-      <h2>Cost Comparison</h2>
-      <table class="results-table" role="table" aria-label="Side-by-side cost comparison of The Wilds, Laural Mill, and Other Venue">
-        <thead>
-          <tr>
-            <th>Category</th>
-            <th class="amount">
-              <a href="https://thewildsvenue.com/" target="_blank" rel="noopener noreferrer" class="venue-link-header">
-                The Wilds
-              </a>
-            </th>
-            <th class="amount">
-              <a href="https://lauralmill.com/" target="_blank" rel="noopener noreferrer" class="venue-link-header">
-                Laural Mill
-              </a>
-            </th>
-            <th class="amount">Other Venue</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from(allCategories.entries()).map(([categoryId, label], idx) => {
-            const wildsItem = wildsMap.get(categoryId);
-            const lauralItem = lauralMap.get(categoryId);
-            const otherItem = otherMap.get(categoryId);
-
-            const displayName = wildsItem?.name || lauralItem?.name || otherItem?.name || label;
-
-            const wildsAmount = wildsItem?.amount ?? 0;
-            const lauralAmount = lauralItem?.amount ?? 0;
-            const otherAmount = otherItem?.amount ?? 0;
-            
-            return (
-              <tr key={idx}>
-                <td class="category-name" data-label="Category">
-                  {displayName}
-                  {wildsItem?.isIncluded && (
-                    <span class="included-marker" title="Included at our venues">
-                      ✓ Included
-                    </span>
-                  )}
-                </td>
-                <td class="amount" data-label="The Wilds">${wildsAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td class="amount" data-label="Laural Mill">${lauralAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td class="amount" data-label="Other Venue">${otherAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              </tr>
-            );
-          })}
-          
-          <tr class="section-header">
-            <td colSpan={4} data-label=""><strong>Taxes & Fees</strong></td>
-          </tr>
-          
-          <tr>
-            <td class="category-name" data-label="Category">Service Fee</td>
-            <td class="amount" data-label="The Wilds">${wildsResult.service.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="amount" data-label="Laural Mill">${lauralResult.service.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="amount" data-label="Other Venue">${otherResult.service.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          </tr>
-          
-          <tr>
-            <td class="category-name" data-label="Category">Tax</td>
-            <td class="amount" data-label="The Wilds">${wildsResult.tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="amount" data-label="Laural Mill">${lauralResult.tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="amount" data-label="Other Venue">${otherResult.tax.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          </tr>
-          
-          {(wildsResult.gratuity > 0 || lauralResult.gratuity > 0 || otherResult.gratuity > 0) && (
-            <tr>
-              <td class="category-name" data-label="Category">Gratuity</td>
-              <td class="amount" data-label="The Wilds">${wildsResult.gratuity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              <td class="amount" data-label="Laural Mill">${lauralResult.gratuity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              <td class="amount" data-label="Other Venue">${otherResult.gratuity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            </tr>
-          )}
-          
-          <tr>
-            <td class="category-name" data-label="Category">Contingency Buffer</td>
-            <td class="amount" data-label="The Wilds">${wildsResult.contingency.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="amount" data-label="Laural Mill">${lauralResult.contingency.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="amount" data-label="Other Venue">${otherResult.contingency.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          </tr>
-          
-          <tr class="total-row">
-            <td data-label=""><strong>TOTAL ESTIMATE</strong></td>
-            <td class="amount" data-label="The Wilds">${wildsResult.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="amount" data-label="Laural Mill">${lauralResult.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-            <td class="amount" data-label="Other Venue">${otherResult.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-          </tr>
-          
-          <tr class="total-row">
-            <td data-label=""><strong>Per Guest</strong></td>
-            <td class="amount" data-label="The Wilds">${wildsResult.perGuest.toFixed(2)}</td>
-            <td class="amount" data-label="Laural Mill">${lauralResult.perGuest.toFixed(2)}</td>
-            <td class="amount" data-label="Other Venue">${otherResult.perGuest.toFixed(2)}</td>
-          </tr>
+          <TotalRow
+            label="Per Guest"
+            amounts={venues.map(v => ({ value: v.result.perGuest, venueLabel: v.name }))}
+            isPerGuest={true}
+          />
         </tbody>
       </table>
     </div>
