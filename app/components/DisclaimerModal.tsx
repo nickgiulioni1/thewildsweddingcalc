@@ -58,8 +58,17 @@ export function DisclaimerModal({ onClose }: DisclaimerModalProps) {
     }
   };
 
+  const handleOverlayKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      if (e.target === e.currentTarget) {
+        onClose();
+      }
+    }
+  };
+
   return (
-    <div class="modal-overlay" onClick={handleOverlayClick} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+    <div class="modal-overlay" onClick={handleOverlayClick} onKeyDown={handleOverlayKeyDown} role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div class="modal-content">
         <button
           ref={closeButtonRef}

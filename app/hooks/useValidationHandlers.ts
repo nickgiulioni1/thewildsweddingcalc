@@ -1,5 +1,5 @@
 import { useCallback } from 'preact/hooks';
-import { MealStyle, BarService, GUESTS } from '../../config/config';
+import { GUESTS } from '../../config/config';
 import { validateDate, validatePercentage, validateGuestCount, clamp } from '../lib/validation';
 
 interface ValidationState {
