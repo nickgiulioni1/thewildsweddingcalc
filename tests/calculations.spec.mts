@@ -4,6 +4,7 @@ import { getVenueFee } from '../app/lib/venueFees';
 import { clampGuests, getDefaultFoodCost } from '../app/lib/defaults';
 import { calculateOurVenue, calculateOtherVenue } from '../app/lib/calc';
 import { generateCSVSingle, generateCSVComparison } from '../app/lib/exports';
+import { isHoliday } from '../app/lib/holidays';
 import { VENUE_FEES } from '../config/config';
 
 describe('Wedding Cost Estimator - Calculations', () => {
@@ -345,6 +346,105 @@ describe('Wedding Cost Estimator - Calculations', () => {
       expect(csv).toContain('Guest Count: 150');
       expect(csv).toContain('Difference (Other - Ours)');
       expect(csv).toContain('TOTAL');
+    });
+  });
+
+  describe('Test 6: Holiday detection', () => {
+    describe('Fixed date holidays', () => {
+      it('should recognize New Year\'s Day', () => {
+        expect(isHoliday('2025-01-01')).toBe(true);
+        expect(isHoliday('2026-01-01')).toBe(true);
+      });
+
+      it('should recognize Independence Day', () => {
+        expect(isHoliday('2025-07-04')).toBe(true);
+        expect(isHoliday('2026-07-04')).toBe(true);
+      });
+
+      it('should recognize Christmas', () => {
+        expect(isHoliday('2025-12-25')).toBe(true);
+        expect(isHoliday('2026-12-25')).toBe(true);
+      });
+
+      it('should recognize New Year\'s Eve', () => {
+        expect(isHoliday('2025-12-31')).toBe(true);
+        expect(isHoliday('2026-12-31')).toBe(true);
+      });
+    });
+
+    describe('Floating holidays', () => {
+      it('should recognize Memorial Day (last Monday of May)', () => {
+        // 2025: May 26 is Memorial Day
+        expect(isHoliday('2025-05-26')).toBe(true);
+        // 2026: May 25 is Memorial Day
+        expect(isHoliday('2026-05-25')).toBe(true);
+        // Non-Memorial Day dates in May
+        expect(isHoliday('2025-05-25')).toBe(false);
+        expect(isHoliday('2025-05-19')).toBe(false);
+      });
+
+      it('should recognize Labor Day (first Monday of September)', () => {
+        // 2025: September 1 is Labor Day
+        expect(isHoliday('2025-09-01')).toBe(true);
+        // 2026: September 7 is Labor Day
+        expect(isHoliday('2026-09-07')).toBe(true);
+        // Non-Labor Day dates in September
+        expect(isHoliday('2025-09-08')).toBe(false);
+        expect(isHoliday('2026-09-01')).toBe(false);
+      });
+
+      it('should recognize Thanksgiving (fourth Thursday of November)', () => {
+        // 2025: November 27 is Thanksgiving
+        expect(isHoliday('2025-11-27')).toBe(true);
+        // 2026: November 26 is Thanksgiving
+        expect(isHoliday('2026-11-26')).toBe(true);
+        // Non-Thanksgiving dates in November
+        expect(isHoliday('2025-11-20')).toBe(false);
+        expect(isHoliday('2025-11-28')).toBe(false);
+      });
+    });
+
+    describe('Non-holiday dates', () => {
+      it('should not recognize regular dates as holidays', () => {
+        expect(isHoliday('2025-03-15')).toBe(false);
+        expect(isHoliday('2025-06-20')).toBe(false);
+        expect(isHoliday('2025-10-10')).toBe(false);
+      });
+    });
+
+    describe('Holiday pricing band', () => {
+      it('should return saturday_holiday band for holidays regardless of day of week', () => {
+        // July 4, 2025 is a Friday - but should still be saturday_holiday band
+        expect(getBand('2025-07-04')).toBe('saturday_holiday');
+        // Christmas 2025 is a Thursday
+        expect(getBand('2025-12-25')).toBe('saturday_holiday');
+        // Memorial Day 2025 is a Monday
+        expect(getBand('2025-05-26')).toBe('saturday_holiday');
+        // Labor Day 2025 is a Monday
+        expect(getBand('2025-09-01')).toBe('saturday_holiday');
+        // Thanksgiving 2025 is a Thursday
+        expect(getBand('2025-11-27')).toBe('saturday_holiday');
+      });
+    });
+  });
+
+  describe('Test 7: Edge cases', () => {
+    it('should handle empty date string gracefully in getBand', () => {
+      // Should not throw, should return a default band
+      expect(() => getBand('')).not.toThrow();
+    });
+
+    it('should handle zero guests in clampGuests', () => {
+      expect(clampGuests(0)).toBe(25); // Should clamp to minimum
+    });
+
+    it('should handle negative guests in clampGuests', () => {
+      expect(clampGuests(-10)).toBe(25); // Should clamp to minimum
+    });
+
+    it('should handle NaN food cost calculation', () => {
+      const cost = getDefaultFoodCost(NaN, 'buffet');
+      expect(Number.isNaN(cost)).toBe(true);
     });
   });
 });

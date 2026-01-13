@@ -53,7 +53,7 @@ export function InputPanel(props: InputPanelProps) {
       <div class="input-grid">
         {/* Wedding Date */}
         <div class="input-group input-group-date">
-        <label for="wedding-date">Wedding Date</label>
+        <label htmlFor="wedding-date">Wedding Date</label>
         <input
           type="date"
           id="wedding-date"
@@ -77,7 +77,7 @@ export function InputPanel(props: InputPanelProps) {
       
       {/* Guest Count */}
       <div class="input-group">
-        <label for="guest-count">Estimated Guest Count</label>
+        <label htmlFor="guest-count">Estimated Guest Count</label>
         <input
           type="number"
           id="guest-count"
@@ -107,7 +107,7 @@ export function InputPanel(props: InputPanelProps) {
       
       {/* Meal Style */}
       <div class="input-group">
-        <label for="meal-style">
+        <label htmlFor="meal-style">
           Meal Style
           <Tooltip text="Different meal styles have different per-guest costs. Buffet is typically most affordable." />
         </label>
@@ -129,7 +129,7 @@ export function InputPanel(props: InputPanelProps) {
       
       {/* Bar Duration */}
       <div class="input-group">
-        <label for="bar-duration">
+        <label htmlFor="bar-duration">
           Bar Duration (hours)
           <Tooltip text="Longer bar service increases both setup fee and per-guest costs." />
         </label>
@@ -148,7 +148,7 @@ export function InputPanel(props: InputPanelProps) {
       
       {/* Bar Service */}
       <div class="input-group input-group-bar-service">
-        <label for="bar-service">Bar Service Type</label>
+        <label htmlFor="bar-service">Bar Service Type</label>
         {!props.compareMode ? (
           <select
             id="bar-service"
@@ -206,7 +206,7 @@ export function InputPanel(props: InputPanelProps) {
             checked={props.plannerUsed}
             onChange={(e) => props.onPlannerUsedChange((e.target as HTMLInputElement).checked)}
           />
-          <label for="planner-used">
+          <label htmlFor="planner-used">
             External Planner/Coordinator
             <small style="color: #7f8c8d; font-size: 0.875rem; font-weight: normal; margin-top: 4px;">
               Our venues include planning & day-of coordination. Check this if using an external planner.
@@ -224,7 +224,7 @@ export function InputPanel(props: InputPanelProps) {
             checked={props.compareMode}
             onChange={(e) => props.onCompareModeChange((e.target as HTMLInputElement).checked)}
           />
-          <label for="compare-mode">
+          <label htmlFor="compare-mode">
             Compare with a typical Other Venue
             <small style="color: #7f8c8d; font-size: 0.875rem; font-weight: normal; margin-top: 4px;">
               See side-by-side comparison with venues that don't include planning, setup, etc.
@@ -296,7 +296,7 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
       </summary>
       <div id="advanced-settings-content" class="accordion-content">
         <div class="input-group">
-          <label for="service-percent">Service Fee (%)</label>
+          <label htmlFor="service-percent">Service Fee (%)</label>
           <input
             type="number"
             id="service-percent"
@@ -320,7 +320,7 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
         </div>
         
         <div class="input-group">
-          <label for="tax-percent">Tax (%)</label>
+          <label htmlFor="tax-percent">Tax (%)</label>
           <input
             type="number"
             id="tax-percent"
@@ -344,7 +344,7 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
         </div>
         
         <div class="input-group">
-          <label for="gratuity-percent">Gratuity (%)</label>
+          <label htmlFor="gratuity-percent">Gratuity (%)</label>
           <input
             type="number"
             id="gratuity-percent"
@@ -368,7 +368,7 @@ function AdvancedSettings(props: AdvancedSettingsProps) {
         </div>
         
         <div class="input-group">
-          <label for="contingency-percent">Contingency Buffer (%)</label>
+          <label htmlFor="contingency-percent">Contingency Buffer (%)</label>
           <input
             type="number"
             id="contingency-percent"

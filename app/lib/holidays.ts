@@ -86,7 +86,7 @@ function getNthWeekdayOfMonth(
   const firstDayWeekday = firstDay.getDay();
 
   // Calculate the first occurrence of the target weekday
-  let daysUntilTarget = (weekday - firstDayWeekday + 7) % 7;
+  const daysUntilTarget = (weekday - firstDayWeekday + 7) % 7;
   const firstOccurrence = 1 + daysUntilTarget;
 
   // Calculate the nth occurrence

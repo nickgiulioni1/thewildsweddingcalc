@@ -1,33 +1,62 @@
 // @vitest-environment jsdom
 import { render } from 'preact';
-import { useEffect } from 'preact/hooks';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { useValidationHandlers } from '../app/hooks/useValidationHandlers';
 import { useOverrideHandlers } from '../app/hooks/useOverrideHandlers';
 import { useWeddingCalculator } from '../app/hooks/useWeddingCalculator';
+import { CategoryOverrides, OtherVenueOverrides } from '../app/lib/calc';
 import * as storage from '../app/lib/storage';
 import { GUESTS, WEDDING_CATEGORIES, OTHER_VENUE_DEFAULTS, EXTERNAL_PLANNER_COST } from '../config/config';
+
+// Type for validation handlers returned by the hook
+interface ValidationHandlers {
+  onDateChange: (newDate: string) => void;
+  onGuestsChange: (newGuests: number) => void;
+  onServiceChange: (newService: number) => void;
+  onTaxChange: (newTax: number) => void;
+  onGratuityChange: (newGratuity: number) => void;
+  onContingencyChange: (newContingency: number) => void;
+}
+
+// Type for override handlers returned by the hook
+interface OverrideHandlers {
+  onOverrideChange: (category: string, value: number) => void;
+  onResetOverrides: () => void;
+  onOtherVenueOverrideChange: (category: string, value: number) => void;
+  onResetOtherVenueOverrides: () => void;
+}
+
+// Type for the calculator return
+interface CalculatorReturn {
+  guests: number;
+  setGuests: (guests: number) => void;
+}
+
+// Wrapper to capture hook results
+interface HookCapture<T> {
+  current: T | null;
+}
 
 const flushEffects = () => new Promise(resolve => setTimeout(resolve, 0));
 
 describe('Hook handlers', () => {
   describe('useValidationHandlers', () => {
-    let container;
+    let container: HTMLDivElement;
 
-    let setDate = vi.fn();
-    let setGuests = vi.fn();
-    let setService = vi.fn();
-    let setTax = vi.fn();
-    let setGratuity = vi.fn();
-    let setContingency = vi.fn();
+    let setDate: Mock;
+    let setGuests: Mock;
+    let setService: Mock;
+    let setTax: Mock;
+    let setGratuity: Mock;
+    let setContingency: Mock;
 
-    let setDateError = vi.fn();
-    let setGuestsError = vi.fn();
-    let setGuestsClamped = vi.fn();
-    let setServiceError = vi.fn();
-    let setTaxError = vi.fn();
-    let setGratuityError = vi.fn();
-    let setContingencyError = vi.fn();
+    let setDateError: Mock;
+    let setGuestsError: Mock;
+    let setGuestsClamped: Mock;
+    let setServiceError: Mock;
+    let setTaxError: Mock;
+    let setGratuityError: Mock;
+    let setContingencyError: Mock;
 
     beforeEach(() => {
       container = document.createElement('div');
@@ -49,7 +78,7 @@ describe('Hook handlers', () => {
     });
 
     it('validates dates and guests on change', async () => {
-      let handlers = null;
+      const capture: HookCapture<ValidationHandlers> = { current: null };
 
       function Component() {
         const validationHandlers = useValidationHandlers(
@@ -72,32 +101,32 @@ describe('Hook handlers', () => {
           }
         );
 
-        handlers = validationHandlers;
+        capture.current = validationHandlers;
         return null;
       }
 
       render(<Component />, container);
       await flushEffects();
 
-      handlers?.onDateChange('2024-13-01');
+      capture.current!.onDateChange('2024-13-01');
       expect(setDate).toHaveBeenCalledWith('2024-13-01');
       expect(setDateError).toHaveBeenCalledWith('Invalid date');
 
-      handlers?.onDateChange('2099-12-01');
+      capture.current!.onDateChange('2099-12-01');
       expect(setDateError).toHaveBeenLastCalledWith('Date cannot be more than 10 years in the future');
 
-      handlers?.onGuestsChange(GUESTS.min - 5);
+      capture.current!.onGuestsChange(GUESTS.min - 5);
       expect(setGuests).toHaveBeenCalledWith(GUESTS.min - 5);
       expect(setGuestsClamped).toHaveBeenCalledWith(true);
       expect(setGuestsError).toHaveBeenCalledWith(null);
 
-      handlers?.onGuestsChange(GUESTS.max + 50);
+      capture.current!.onGuestsChange(GUESTS.max + 50);
       expect(setGuestsClamped).toHaveBeenLastCalledWith(true);
       expect(setGuestsError).toHaveBeenLastCalledWith(null);
     });
 
     it('applies percentage validation rules', async () => {
-      let handlers = null;
+      const capture: HookCapture<ValidationHandlers> = { current: null };
 
       function Component() {
         const validationHandlers = useValidationHandlers(
@@ -120,87 +149,87 @@ describe('Hook handlers', () => {
           }
         );
 
-        handlers = validationHandlers;
+        capture.current = validationHandlers;
         return null;
       }
 
       render(<Component />, container);
       await flushEffects();
 
-      handlers?.onServiceChange(-5);
+      capture.current!.onServiceChange(-5);
       expect(setService).toHaveBeenCalledWith(-5);
       expect(setServiceError).toHaveBeenCalledWith('Percentage cannot be negative');
 
-      handlers?.onTaxChange(150);
+      capture.current!.onTaxChange(150);
       expect(setTaxError).toHaveBeenCalledWith('Percentage cannot exceed 100%');
 
-      handlers?.onGratuityChange(15);
+      capture.current!.onGratuityChange(15);
       expect(setGratuityError).toHaveBeenCalledWith(null);
 
-      handlers?.onContingencyChange(175);
+      capture.current!.onContingencyChange(175);
       expect(setContingencyError).toHaveBeenCalledWith(null);
     });
   });
 
   describe('useOverrideHandlers', () => {
-    let container;
-    let overrides;
-    let otherOverrides;
-    let setOverrides;
-    let setOtherOverrides;
+    let container: HTMLDivElement;
+    let overrides: Record<string, number>;
+    let otherOverrides: Record<string, number>;
+    let setOverrides: Mock;
+    let setOtherOverrides: Mock;
 
     beforeEach(() => {
       container = document.createElement('div');
       overrides = { photography: 1200, food: 5000 };
       otherOverrides = { tablesChairs: 1000 };
 
-      setOverrides = vi.fn(update => {
-        overrides = typeof update === 'function' ? update(overrides) : update;
+      setOverrides = vi.fn((update: Partial<CategoryOverrides> | ((prev: Partial<CategoryOverrides>) => Partial<CategoryOverrides>)) => {
+        overrides = typeof update === 'function' ? update(overrides) as Record<string, number> : update as Record<string, number>;
       });
 
-      setOtherOverrides = vi.fn(update => {
-        otherOverrides = typeof update === 'function' ? update(otherOverrides) : update;
+      setOtherOverrides = vi.fn((update: Partial<OtherVenueOverrides> | ((prev: Partial<OtherVenueOverrides>) => Partial<OtherVenueOverrides>)) => {
+        otherOverrides = typeof update === 'function' ? update(otherOverrides) as Record<string, number> : update as Record<string, number>;
       });
     });
 
     it('updates overrides and removes NaN values', async () => {
-      let handlers = null;
+      const capture: HookCapture<OverrideHandlers> = { current: null };
 
       function Component() {
         const overrideHandlers = useOverrideHandlers(setOverrides, setOtherOverrides);
-        handlers = overrideHandlers;
+        capture.current = overrideHandlers;
         return null;
       }
 
       render(<Component />, container);
       await flushEffects();
 
-      handlers?.onOverrideChange('photography', 2500);
+      capture.current!.onOverrideChange('photography', 2500);
       expect(overrides.photography).toBe(2500);
 
-      handlers?.onOverrideChange('food', Number.NaN);
+      capture.current!.onOverrideChange('food', Number.NaN);
       expect('food' in overrides).toBe(false);
     });
 
     it('resets overrides to defaults and clears other venue overrides', async () => {
-      let handlers = null;
+      const capture: HookCapture<OverrideHandlers> = { current: null };
 
       function Component() {
         const overrideHandlers = useOverrideHandlers(setOverrides, setOtherOverrides);
-        handlers = overrideHandlers;
+        capture.current = overrideHandlers;
         return null;
       }
 
       render(<Component />, container);
       await flushEffects();
 
-      handlers?.onOtherVenueOverrideChange('tablesChairs', 1800);
+      capture.current!.onOtherVenueOverrideChange('tablesChairs', 1800);
       expect(otherOverrides.tablesChairs).toBe(1800);
 
-      handlers?.onResetOtherVenueOverrides();
+      capture.current!.onResetOtherVenueOverrides();
       expect(otherOverrides).toEqual({});
 
-      handlers?.onResetOverrides();
+      capture.current!.onResetOverrides();
 
       Object.entries(WEDDING_CATEGORIES).forEach(([key, category]) => {
         if (key !== 'food') {
@@ -218,7 +247,7 @@ describe('Hook handlers', () => {
   });
 
   describe('useWeddingCalculator integration', () => {
-    let container;
+    let container: HTMLDivElement;
 
     beforeEach(() => {
       container = document.createElement('div');
@@ -227,23 +256,24 @@ describe('Hook handlers', () => {
     });
 
     it('clamps guests and persists normalized values', async () => {
-      let calculator = null;
+      const capture: HookCapture<CalculatorReturn> = { current: null };
       const saveSpy = vi.spyOn(storage, 'saveState');
 
       function Component() {
-        calculator = useWeddingCalculator();
+        const calc = useWeddingCalculator();
+        capture.current = calc;
         return null;
       }
 
       render(<Component />, container);
       await flushEffects();
 
-      calculator?.setGuests(GUESTS.max + 25);
+      capture.current!.setGuests(GUESTS.max + 25);
       await flushEffects();
       await flushEffects();
       await flushEffects();
 
-      expect(calculator?.guests).toBe(GUESTS.max);
+      expect(capture.current!.guests).toBe(GUESTS.max);
 
       let storedGuests = JSON.parse(localStorage.getItem('wedding-cost-estimator-state') ?? '{}').guests;
       for (let i = 0; i < 5 && storedGuests !== GUESTS.max; i++) {
@@ -251,7 +281,7 @@ describe('Hook handlers', () => {
         storedGuests = JSON.parse(localStorage.getItem('wedding-cost-estimator-state') ?? '{}').guests;
       }
 
-      const savedGuestsCalls = saveSpy.mock.calls.map(call => call[0]?.guests);
+      const savedGuestsCalls = saveSpy.mock.calls.map(call => (call[0] as { guests?: number })?.guests);
       expect(savedGuestsCalls).toContain(GUESTS.max);
       expect(saveSpy).toHaveBeenCalledWith(expect.objectContaining({ guests: GUESTS.max }));
       expect(storedGuests).toBe(GUESTS.max);
@@ -259,18 +289,18 @@ describe('Hook handlers', () => {
       render(null, container);
       await flushEffects();
 
-      calculator = null;
+      capture.current = null;
       render(<Component />, container);
       await flushEffects();
 
-      expect(calculator?.guests).toBe(GUESTS.max);
+      expect(capture.current!.guests).toBe(GUESTS.max);
 
-      calculator?.setGuests(GUESTS.min - 10);
+      capture.current!.setGuests(GUESTS.min - 10);
       await flushEffects();
       await flushEffects();
       await flushEffects();
 
-      expect(calculator?.guests).toBe(GUESTS.min);
+      expect(capture.current!.guests).toBe(GUESTS.min);
 
       let reloadedGuests = JSON.parse(localStorage.getItem('wedding-cost-estimator-state') ?? '{}').guests;
       for (let i = 0; i < 5 && reloadedGuests !== GUESTS.min; i++) {
@@ -283,4 +313,3 @@ describe('Hook handlers', () => {
     });
   });
 });
-
